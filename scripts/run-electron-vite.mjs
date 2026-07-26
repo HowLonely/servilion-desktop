@@ -1,0 +1,22 @@
+import { spawn } from "node:child_process";
+
+// Las terminales integradas de VS Code exportan ELECTRON_RUN_AS_NODE=1 (VS Code
+// es a su vez una app Electron). Heredarla hace que nuestro Electron arranque
+// como Node puro: `require("electron")` devuelve una ruta en vez de la API, y el
+// proceso main revienta con "Cannot read properties of undefined (reading 'app')".
+//
+// Lanzar electron-vite desde aquí, con la variable quitada, hace que `npm run
+// dev` funcione igual desde VS Code que desde una terminal normal.
+const env = { ...process.env };
+delete env.ELECTRON_RUN_AS_NODE;
+
+const child = spawn("electron-vite", process.argv.slice(2), {
+  env,
+  stdio: "inherit",
+  shell: true,
+});
+
+child.on("exit", (code, signal) => {
+  if (signal) process.kill(process.pid, signal);
+  else process.exit(code ?? 0);
+});

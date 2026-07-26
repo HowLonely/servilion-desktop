@@ -1,0 +1,27 @@
+appId: cl.servilion.desktop
+productName: Servilion Digitalización
+copyright: Servilion
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - "out/**/*"
+  - "!**/{.eslintrc,.prettierrc,tsconfig*.json}"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: ${productName}-${version}-setup.${ext}
+
+# Instalación por equipo, no por usuario: la terminal la usan varios turnos
+# distintos y la app debe estar disponible para cualquier cuenta de Windows.
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Servilion Digitalización
