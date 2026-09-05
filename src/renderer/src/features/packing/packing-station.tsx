@@ -1,35 +1,127 @@
 import { useRef, useState } from "react";
-import { PackageSearch, ScanLine } from "lucide-react";
+import { Check, CircleAlert, PackageSearch, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StationShell } from "@/components/station-shell";
+import { formatDateTime } from "@/lib/date";
 import { parseApiError } from "@/lib/api/errors";
 import { useSession } from "@/lib/auth/session-provider";
 import { OrderDetailDialog } from "@/features/orders/components/order-detail-dialog";
 import { OrderNumberLabel } from "@/features/orders/components/order-number-label";
 import { OrderStatusBadge } from "@/features/orders/components/order-status-badge";
 import { PackingPanel } from "@/features/packing/packing-panel";
-import { useFindOrderByCode } from "@/features/orders/hooks/use-orders";
+import {
+  isAmbiguousReference,
+  useOrder,
+  usePackingCodeScan,
+  usePackingScan,
+} from "@/features/orders/hooks/use-orders";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "@/features/orders/lib/status";
 
 import type { components } from "@/lib/api/schema";
 import type { ServerStatus } from "@shared/types";
 
+type PackingScanOut = components["schemas"]["PackingScanOut"];
 type LaundryOrderOut = components["schemas"]["LaundryOrderOut"];
+type AmbiguousOrderOut = components["schemas"]["AmbiguousOrderOut"];
 
-// El morral solo se puede validar mientras está en planta (post-digitalización
-// y antes de despacharse). Coincide con las etapas en que `PackingPanel`
-// habilita el pistoleo.
-const PACKING_STAGES = ["RECIBIDA", "EN_REVISION", "INCOMPLETA"];
+// Etapas en que la estación tiene algo que hacer con el morral. Coincide con
+// las que `PackingPanel` habilita: COMPLETADA porque el morral cerrado sigue
+// en planta esperando su despacho, y DESPACHADA porque puede quedar una prenda
+// resuelta pendiente de su envío aparte (ahí el panel filtra si de verdad
+// queda algo por enviar).
+const PACKING_STAGES = [
+  "RECIBIDA",
+  "EN_REVISION",
+  "INCOMPLETA",
+  "COMPLETADA",
+  "DESPACHADA",
+];
+
+type Feedback = { ok: boolean; text: string };
+
+type Ambiguity = {
+  reference: string;
+  candidates: AmbiguousOrderOut[];
+  // Segmento de prenda del código pistoleado, si lo traía: al elegir la guía
+  // hay que terminar de aplicarlo, no solo abrir el morral.
+  pendingLabel: string;
+};
 
 /**
- * Estación de empaque y revisión (paso 6 del flujo). Portada del panel web: se
- * escanea el ref/OT de cualquier prenda para abrir el morral y luego se
- * pistolea prenda por prenda. El único cambio es "Ver OT completa", que en la
- * web navegaba al panel y aquí abre un detalle de solo lectura sin salir de la
+ * ¿El despacho que acaba de ocurrir fue el del morral, o el envío aparte de
+ * una prenda que apareció después? Se deduce del sello de envío: el despacho
+ * del morral marca TODAS las resoluciones que existían hasta ese momento, así
+ * que si alguna quedó sellada después de `dispatched_at`, viajó sola.
+ */
+function isFirstDispatch(order: LaundryOrderOut): boolean {
+  if (!order.dispatched_at) return true;
+  const dispatchedAt = new Date(order.dispatched_at).getTime();
+  return !order.missing_item_resolutions.some(
+    (resolution) =>
+      resolution.shipped_at &&
+      new Date(resolution.shipped_at).getTime() > dispatchedAt,
+  );
+}
+
+/** Segmento de prenda de una etiqueta lavable (`P1005-ALM` → `ALM`). */
+function labelSegment(code: string): string {
+  const index = code.lastIndexOf("-");
+  return index === -1 ? "" : code.slice(index + 1).trim();
+}
+
+/** Traduce la acción que resolvió el backend a lo que ve el operador. */
+function describeScan(result: PackingScanOut): Feedback {
+  const { action, order, progress } = result;
+  const counter = `${progress.scanned_total}/${progress.declared_total}`;
+
+  if (action === "ABIERTO") {
+    return { ok: true, text: `Morral abierto · ${counter} prendas` };
+  }
+  if (action === "CERRADO") {
+    return order.status === "COMPLETADA"
+      ? { ok: true, text: `Morral cerrado completo ✓ · ${counter}` }
+      : { ok: false, text: `Morral cerrado INCOMPLETO · ${counter}` };
+  }
+  if (action === "ENCONTRADA") {
+    return progress.is_complete
+      ? { ok: true, text: `Prenda encontrada · morral completo ✓ · ${counter}` }
+      : { ok: true, text: `Prenda encontrada · ${counter}` };
+  }
+  if (action === "DESPACHADA") {
+    // Si la guía ya estaba despachada, esto es el envío aparte de la prenda
+    // que apareció después, no el del morral.
+    if (order.dispatched_at && !isFirstDispatch(order)) {
+      return { ok: true, text: `Prenda despachada a faena ✓ · ${counter}` };
+    }
+    // El morral pudo salir con un faltante a bordo: se dice, porque es lo que
+    // el operador tiene que anotar en la guía de transporte.
+    return progress.is_complete
+      ? { ok: true, text: `Morral despachado a faena ✓ · ${counter}` }
+      : { ok: false, text: `Morral despachado INCOMPLETO · ${counter}` };
+  }
+  return progress.is_complete
+    ? { ok: true, text: `Morral completo ✓ · ${counter}` }
+    : { ok: true, text: `Prenda pistoleada · ${counter}` };
+}
+
+/**
+ * Estación de empaque y revisión (paso 6 del flujo).
+ *
+ * Hay un solo input para los dos códigos que hay sobre la mesa, porque el
+ * backend deduce la acción y el operador no tiene que elegir modo en pantalla
+ * (FLUJO_NEGOCIO.md §4, paso 6):
+ * - la boleta del morral lo abre, el segundo disparo lo cierra y el tercero lo
+ *   despacha;
+ * - la etiqueta lavable de una prenda abre el morral (si hacía falta) y marca
+ *   la prenda en el mismo disparo.
+ *
+ * Es el mismo escáner que el panel web, con un cambio: "Ver OT completa", que
+ * allá navega al panel, aquí abre un detalle de solo lectura sin salir de la
  * estación.
  */
 export function PackingStation({
@@ -48,21 +140,73 @@ export function PackingStation({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
-  const [order, setOrder] = useState<LaundryOrderOut | null>(null);
+  const [orderId, setOrderId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const lookup = useFindOrderByCode();
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [ambiguity, setAmbiguity] = useState<Ambiguity | null>(null);
 
-  async function handleScan() {
+  const { data: order } = useOrder(orderId ?? undefined);
+  const scan = usePackingCodeScan();
+
+  function focusInput(): void {
+    inputRef.current?.focus();
+  }
+
+  function clearStation(): void {
+    setOrderId(null);
+    setCode("");
+    setFeedback(null);
+    setAmbiguity(null);
+    focusInput();
+  }
+
+  async function handleScan(): Promise<void> {
     const value = code.trim();
     if (!value) return;
+    setAmbiguity(null);
     try {
-      const found = await lookup.mutateAsync(value);
-      setOrder(found);
+      const result = await scan.mutateAsync({ code: value, quantity: 1 });
+      setOrderId(result.order.id);
       setCode("");
-      // No se refoca aquí: el panel de empaque toma el foco para pistolear.
+      setFeedback(describeScan(result));
+      if (result.action === "CERRADO") {
+        toast[result.order.status === "COMPLETADA" ? "success" : "warning"](
+          result.order.status === "COMPLETADA"
+            ? "Morral validado: OT completa. Vuelve a pistolear la boleta para despacharla."
+            : "Morral incompleto: OT marcada como incompleta.",
+        );
+      }
+      if (result.action === "DESPACHADA") {
+        const secondShipment = !isFirstDispatch(result.order);
+        toast[
+          secondShipment || result.progress.is_complete ? "success" : "warning"
+        ](
+          secondShipment
+            ? "Prenda despachada a faena en envío aparte."
+            : result.progress.is_complete
+              ? "Morral despachado a faena."
+              : "Morral despachado a faena con prendas faltantes pendientes.",
+        );
+      }
     } catch (error) {
-      toast.error(parseApiError(error).detail);
-      inputRef.current?.focus();
+      if (isAmbiguousReference(error)) {
+        // El código calza con más de una guía viva y solo el operador, que las
+        // tiene al frente, sabe cuál es. No es el ref repitiéndose: desde el
+        // ciclo (`ReferenceCounter`) el ref corre de 1000 a 1999 y al dar la
+        // vuelta avanza la letra. Lo que sí puede cruzarse es un código con
+        // otra capa —una OT que coincide con el ref o el control de otra guía—
+        // o un morral viejo que quedó Incompleto y nunca se cerró.
+        setAmbiguity({
+          reference: error.reference,
+          candidates: error.candidates,
+          pendingLabel: labelSegment(value),
+        });
+        setFeedback(null);
+      } else {
+        setFeedback({ ok: false, text: parseApiError(error).detail });
+      }
+    } finally {
+      focusInput();
     }
   }
 
@@ -78,24 +222,24 @@ export function PackingStation({
       onOpenSettings={onOpenSettings}
     >
       <div className="flex flex-col gap-6">
-        {/* Abrir morral */}
+        {/* Escáner único de la mesa */}
         <Card className="p-5">
           <label
             htmlFor="morral-code"
             className="flex items-center gap-2 text-sm font-semibold tracking-tight"
           >
             <ScanLine className="size-5 text-primary" />
-            Abrir morral
+            Pistolea la boleta o la etiqueta de una prenda
           </label>
           <div className="mt-2 flex flex-wrap items-stretch gap-2">
             <Input
               id="morral-code"
               ref={inputRef}
               autoFocus
-              className="h-14 min-w-64 flex-1 font-mono text-2xl uppercase tracking-wide"
-              placeholder="Escanea el ref, la OT o el control…"
-              value={code}
               autoComplete="off"
+              className="h-14 min-w-64 flex-1 font-mono text-2xl uppercase tracking-wide"
+              placeholder="Ej. P1005 o P1005-ALM…"
+              value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -108,30 +252,64 @@ export function PackingStation({
               size="lg"
               className="h-14 px-6 text-lg"
               onClick={() => void handleScan()}
-              disabled={lookup.isPending}
+              disabled={scan.isPending}
             >
-              Abrir morral
+              Pistolear
             </Button>
             {order && (
               <Button
                 variant="outline"
                 size="lg"
                 className="h-14 px-5 text-lg"
-                onClick={() => {
-                  setOrder(null);
-                  setCode("");
-                  inputRef.current?.focus();
-                }}
+                onClick={clearStation}
               >
                 Limpiar
               </Button>
             )}
           </div>
+
+          {feedback && (
+            <div
+              className={cn(
+                "mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-lg font-medium",
+                feedback.ok
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300"
+                  : "bg-destructive/10 text-destructive",
+              )}
+            >
+              {feedback.ok ? (
+                <Check className="size-5 shrink-0" />
+              ) : (
+                <CircleAlert className="size-5 shrink-0" />
+              )}
+              {feedback.text}
+            </div>
+          )}
+
           <p className="mt-2 text-sm text-muted-foreground">
-            El QR de la etiqueta lavable de cada prenda lleva el ref de la OT.
-            Escanea cualquier prenda para abrir su morral.
+            La boleta abre el morral y, pistoleada de nuevo, lo cierra; el tercer
+            disparo lo despacha. La etiqueta de una prenda lo abre y marca la
+            prenda en un solo disparo.
           </p>
         </Card>
+
+        {ambiguity && (
+          <AmbiguityPicker
+            ambiguity={ambiguity}
+            onResolved={(resolvedId, text) => {
+              setOrderId(resolvedId);
+              setAmbiguity(null);
+              setCode("");
+              setFeedback({ ok: true, text });
+              focusInput();
+            }}
+            onFailed={(text) => {
+              setAmbiguity(null);
+              setFeedback({ ok: false, text });
+              focusInput();
+            }}
+          />
+        )}
 
         {!canPack && (
           <p className="text-base text-muted-foreground">
@@ -165,6 +343,9 @@ export function PackingStation({
             </Card>
 
             {canPack && isPackingStage ? (
+              // El panel no pistolea: el escáner de arriba ya cubre prendas,
+              // cierre y despacho. Abajo queda el progreso y lo que se declara
+              // a mano (prenda comprada, boleta, botones de respaldo).
               <PackingPanel order={order} />
             ) : canPack ? (
               <Card>
@@ -177,7 +358,8 @@ export function PackingStation({
                         order.status}
                     </strong>
                     , fuera de la etapa de empaque. Solo se puede validar mientras
-                    el morral está en planta (Recibida, En revisión o Incompleta).
+                    el morral está en planta (Recibida, En revisión o Despachada
+                    incompleta).
                   </span>
                 </CardContent>
               </Card>
@@ -186,16 +368,113 @@ export function PackingStation({
             <OrderDetailDialog
               orderId={order.id}
               open={detailOpen}
-              onOpenChange={(next) => {
-                setDetailOpen(next);
-                // Al cerrar el detalle el foco vuelve al escáner: si no, el
-                // siguiente pistoleo se pierde en el vacío.
-                if (!next) inputRef.current?.focus();
-              }}
+              onOpenChange={setDetailOpen}
             />
           </>
         )}
       </div>
     </StationShell>
+  );
+}
+
+/**
+ * Desempate cuando un ref calza con más de un morral abierto. Se muestran los
+ * datos que el operador puede contrastar con el morral que tiene al frente
+ * —trabajador, empresa y cuándo entró— en vez de pedirle un dato de calendario
+ * que la etiqueta no trae.
+ */
+function AmbiguityPicker({
+  ambiguity,
+  onResolved,
+  onFailed,
+}: {
+  ambiguity: Ambiguity;
+  onResolved: (orderId: number, text: string) => void;
+  onFailed: (text: string) => void;
+}) {
+  return (
+    <Card className="flex flex-col gap-3 border-amber-400 p-5">
+      <div className="flex items-center gap-2 text-base font-semibold">
+        <CircleAlert className="size-5 text-amber-500" />
+        Hay {ambiguity.candidates.length} morrales abiertos con el ref{" "}
+        <span className="font-mono">{ambiguity.reference}</span>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Elige el morral que tienes al frente: el código calza con más de uno.
+      </p>
+      <div className="overflow-hidden rounded-xl border">
+        {ambiguity.candidates.map((candidate, index) => (
+          <CandidateRow
+            key={candidate.order_id}
+            candidate={candidate}
+            pendingLabel={ambiguity.pendingLabel}
+            bordered={index > 0}
+            onResolved={onResolved}
+            onFailed={onFailed}
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function CandidateRow({
+  candidate,
+  pendingLabel,
+  bordered,
+  onResolved,
+  onFailed,
+}: {
+  candidate: AmbiguousOrderOut;
+  pendingLabel: string;
+  bordered: boolean;
+  onResolved: (orderId: number, text: string) => void;
+  onFailed: (text: string) => void;
+}) {
+  // Una mutación por candidata: el pistoleo pendiente se aplica contra la guía
+  // que el operador elija, ya sin ambigüedad que resolver.
+  const scan = usePackingScan(candidate.order_id);
+
+  async function choose(): Promise<void> {
+    if (!pendingLabel) {
+      // Era la boleta: basta con abrir esta guía en el panel.
+      onResolved(candidate.order_id, "Morral seleccionado");
+      return;
+    }
+    try {
+      const progress = await scan.mutateAsync({
+        code: pendingLabel,
+        quantity: 1,
+      });
+      onResolved(
+        candidate.order_id,
+        `Prenda pistoleada · ${progress.scanned_total}/${progress.declared_total}`,
+      );
+    } catch (error) {
+      onFailed(parseApiError(error).detail);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void choose()}
+      disabled={scan.isPending}
+      className={cn(
+        "flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/60 disabled:opacity-60",
+        bordered && "border-t",
+      )}
+    >
+      <div className="min-w-0">
+        <p className="truncate text-base font-semibold">
+          {candidate.worker_name}
+        </p>
+        <p className="truncate text-sm text-muted-foreground">
+          {candidate.company_name} · OT {candidate.order_number ?? "S/N"} ·
+          Ingresó {formatDateTime(candidate.received_at)}
+        </p>
+      </div>
+      <OrderStatusBadge status={candidate.status} />
+    </button>
   );
 }

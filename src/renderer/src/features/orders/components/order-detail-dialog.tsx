@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/date";
 import { OrderNumberLabel } from "@/features/orders/components/order-number-label";
 import { OrderStatusBadge } from "@/features/orders/components/order-status-badge";
+import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { useOrder } from "@/features/orders/hooks/use-orders";
 
 /**
@@ -103,6 +104,13 @@ export function OrderDetailDialog({
                 </p>
               </div>
             )}
+
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-semibold tracking-tight">
+                Línea de tiempo
+              </h3>
+              <OrderTimeline order={order} />
+            </div>
           </div>
         )}
       </DialogContent>

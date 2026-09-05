@@ -4,16 +4,21 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { LoginScreen } from "@/features/auth/login-screen";
 import { DigitizeStation } from "@/features/digitize/digitize-station";
+import { HistoryStation } from "@/features/history/history-station";
+import { HospitalityStation } from "@/features/hospitality/hospitality-station";
 import { StationMenu } from "@/features/menu/station-menu";
 import { NoStationScreen } from "@/features/menu/no-station-screen";
 import { PackingStation } from "@/features/packing/packing-station";
 import { SettingsScreen } from "@/features/settings/settings-screen";
+import { WeighingStation } from "@/features/weighing/weighing-station";
 import { SessionProvider, useSession } from "@/lib/auth/session-provider";
 import { makeQueryClient } from "@/lib/query-client";
 import { useServerStatus } from "@/lib/use-server-status";
 import { useStationConfig } from "@/lib/use-station-config";
+import { TouchModeProvider } from "@/lib/use-touch-mode";
 
 import type { Station } from "@/lib/auth/capabilities";
+import type { StationConfig } from "@shared/types";
 
 const queryClient = makeQueryClient();
 
@@ -29,12 +34,30 @@ export function App() {
 }
 
 /**
- * Ruteo de la terminal. Seis pantallas y ninguna URL: un kiosco no navega, así
+ * Ruteo de la terminal. Nueve pantallas y ninguna URL: un kiosco no navega, así
  * que un router completo sería peso muerto.
  */
 function AppRouter() {
-  const { status, user, capabilities } = useSession();
   const { config, update } = useStationConfig();
+
+  // El modo tactil envuelve TODAS las pantallas, login y ajustes incluidos: lo
+  // tactil es el monitor, asi que la terminal ya lo es antes de que nadie
+  // inicie sesion.
+  return (
+    <TouchModeProvider enabled={config?.touchMode ?? false}>
+      <Screens config={config} onSaveConfig={update} />
+    </TouchModeProvider>
+  );
+}
+
+function Screens({
+  config,
+  onSaveConfig,
+}: {
+  config: StationConfig | null;
+  onSaveConfig: (patch: Partial<StationConfig>) => Promise<StationConfig>;
+}) {
+  const { status, user, capabilities } = useSession();
   const { status: serverStatus, recheck } = useServerStatus();
 
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
@@ -52,7 +75,7 @@ function AppRouter() {
     return (
       <SettingsScreen
         config={config}
-        onSave={update}
+        onSave={onSaveConfig}
         onClose={() => setSettingsOpen(false)}
         onServerChanged={() => void recheck()}
       />
@@ -106,11 +129,11 @@ function AppRouter() {
     onOpenSettings: () => setSettingsOpen(true),
   };
 
-  return station === "digitize" ? (
-    <DigitizeStation {...shellProps} />
-  ) : (
-    <PackingStation {...shellProps} />
-  );
+  if (station === "weighing") return <WeighingStation {...shellProps} />;
+  if (station === "digitize") return <DigitizeStation {...shellProps} />;
+  if (station === "packing") return <PackingStation {...shellProps} />;
+  if (station === "hospitality") return <HospitalityStation {...shellProps} />;
+  return <HistoryStation {...shellProps} />;
 }
 
 function BootScreen() {

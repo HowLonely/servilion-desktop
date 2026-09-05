@@ -4,7 +4,11 @@ import { CheckCircle2, Loader2, X, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import type { ConnectionTest, StationConfig } from "@shared/types";
+import { PRINTER_LANGUAGES } from "@shared/types";
+import type { ConnectionTest, PrinterConfig, StationConfig } from "@shared/types";
+
+// Ejemplo de ruta UNC de una cola compartida, como marcador de posicion.
+const WINDOWS_SHARE_EXAMPLE = "\\\\localhost\\ZEBRA";
 
 /**
  * Ajustes propios del equipo, no del usuario: a qué servidor apunta esta
@@ -26,6 +30,9 @@ export function SettingsScreen({
   const [stationName, setStationName] = useState("");
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
   const [kioskMode, setKioskMode] = useState(false);
+  const [touchMode, setTouchMode] = useState(false);
+  const [printer, setPrinter] = useState<PrinterConfig | null>(null);
+  const [receiptPrinter, setReceiptPrinter] = useState<PrinterConfig | null>(null);
 
   const [test, setTest] = useState<ConnectionTest | null>(null);
   const [testing, setTesting] = useState(false);
@@ -37,6 +44,9 @@ export function SettingsScreen({
     setStationName(config.stationName);
     setLaunchAtLogin(config.launchAtLogin);
     setKioskMode(config.kioskMode);
+    setTouchMode(config.touchMode);
+    setPrinter(config.printer);
+    setReceiptPrinter(config.receiptPrinter);
   }, [config]);
 
   async function handleTest() {
@@ -52,6 +62,9 @@ export function SettingsScreen({
       stationName: stationName.trim(),
       launchAtLogin,
       kioskMode,
+      touchMode,
+      ...(printer ? { printer } : {}),
+      ...(receiptPrinter ? { receiptPrinter } : {}),
     });
     if (serverChanged) onServerChanged();
     setSaved(true);
@@ -158,7 +171,35 @@ export function SettingsScreen({
               title="Modo kiosco (pantalla completa)"
               description="Ocupa toda la pantalla sin barra de ventana. Para equipos dedicados solo a digitar."
             />
+
+            <ToggleRow
+              checked={touchMode}
+              onChange={setTouchMode}
+              title="Modo pantalla táctil"
+              description="Botones y texto más grandes, teclados en pantalla y sin depender de atajos de teclado. Actívalo en los equipos que se operan con el dedo, como la báscula."
+            />
           </section>
+
+          {printer && (
+            <PrinterSection
+              printer={printer}
+              onChange={setPrinter}
+              slug="labeler"
+              title="Etiquetera (adhesivos y ticket de pesaje)"
+              description="Los adhesivos lavables solo salen de una etiquetera: se pegan a la prenda y viajan al lavado. Se le envía el lenguaje directo, sin pasar por el driver de Windows, que es lo que hace que el código de barras salga nítido y a escala."
+            />
+          )}
+
+          {receiptPrinter && (
+            <PrinterSection
+              printer={receiptPrinter}
+              onChange={setReceiptPrinter}
+              slug="receipt"
+              title="Impresora de boleta (opcional)"
+              description="Solo si esta estación tiene una segunda impresora para la boleta del morral. Déjala sin configurar y la boleta sale por la etiquetera."
+              fallbackNote="Sin configurar: la boleta se imprime en la etiquetera de arriba."
+            />
+          )}
 
           <div className="flex items-center justify-end gap-3">
             {saved && (
@@ -174,6 +215,203 @@ export function SettingsScreen({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Una impresora del equipo. Se usa dos veces: la etiquetera y, si existe, la
+ * impresora de boleta.
+ *
+ * Es ajuste del equipo porque la impresora está físicamente colgada de ESTE PC,
+ * y el mismo instalador va a todas las estaciones. Las medidas se piden en
+ * milímetros y no en puntos para que quien la configura pueda medir el rollo con
+ * una regla en vez de calcular contra el dpi.
+ */
+function PrinterSection({
+  printer,
+  onChange,
+  slug,
+  title,
+  description,
+  fallbackNote,
+}: {
+  printer: PrinterConfig;
+  onChange: (printer: PrinterConfig) => void;
+  /** Prefijo de los `id` del formulario: en la pantalla hay dos secciones. */
+  slug: string;
+  title: string;
+  description: string;
+  /** Qué pasa si se deja sin configurar. Solo la impresora opcional lo lleva. */
+  fallbackNote?: string;
+}) {
+  const patch = (values: Partial<PrinterConfig>): void => onChange({ ...printer, ...values });
+  const language = PRINTER_LANGUAGES.find((item) => item.value === printer.language);
+  // El papel continuo de una impresora de boleta no tiene alto de etiqueta ni
+  // troquel que calibrar: preguntar por el alto y el dpi ahí sería pedir un dato
+  // que no existe.
+  const isLabelPrinter = printer.language !== "escpos";
+
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm">
+      <div>
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${slug}-transport`} className="text-sm font-medium">
+          Cómo está conectada
+        </label>
+        <select
+          id={`${slug}-transport`}
+          className="h-12 rounded-lg border bg-background px-3 text-base"
+          value={printer.transport}
+          onChange={(event) =>
+            patch({ transport: event.target.value as PrinterConfig["transport"] })
+          }
+        >
+          <option value="none">Sin impresora configurada</option>
+          <option value="tcp">Por red (IP)</option>
+          <option value="serial">Por puerto serie (COM)</option>
+          <option value="windows">Compartida en Windows</option>
+        </select>
+        {fallbackNote && printer.transport === "none" && (
+          <p className="text-sm text-muted-foreground">{fallbackNote}</p>
+        )}
+      </div>
+
+      {printer.transport !== "none" && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${slug}-language`} className="text-sm font-medium">
+            Lenguaje de la impresora
+          </label>
+          <select
+            id={`${slug}-language`}
+            className="h-12 rounded-lg border bg-background px-3 text-base"
+            value={printer.language}
+            onChange={(event) =>
+              patch({ language: event.target.value as PrinterConfig["language"] })
+            }
+          >
+            {PRINTER_LANGUAGES.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          {/* No se detecta solo: por un socket crudo no hay forma fiable de
+              preguntarle a una impresora qué habla, y adivinar mal gasta rollo
+              sin dar error. Sale en el manual o en la etiqueta del equipo. */}
+          <p className="text-sm text-muted-foreground">{language?.hint}</p>
+        </div>
+      )}
+
+      {printer.transport === "tcp" && (
+        <div className="flex flex-wrap gap-3">
+          <div className="flex min-w-48 flex-1 flex-col gap-1.5">
+            <label htmlFor={`${slug}-host`} className="text-sm font-medium">
+              Dirección IP
+            </label>
+            <Input
+              id={`${slug}-host`}
+              className="h-12 font-mono text-base"
+              placeholder="192.168.1.60"
+              value={printer.host}
+              onChange={(event) => patch({ host: event.target.value })}
+            />
+          </div>
+          <div className="flex w-32 flex-col gap-1.5">
+            <label htmlFor={`${slug}-port`} className="text-sm font-medium">
+              Puerto
+            </label>
+            <Input
+              id={`${slug}-port`}
+              type="number"
+              className="h-12 font-mono text-base"
+              value={printer.port}
+              onChange={(event) => patch({ port: Number(event.target.value) || 9100 })}
+            />
+          </div>
+        </div>
+      )}
+
+      {(printer.transport === "serial" || printer.transport === "windows") && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${slug}-device`} className="text-sm font-medium">
+            {printer.transport === "serial" ? "Puerto serie" : "Nombre compartido"}
+          </label>
+          <Input
+            id={`${slug}-device`}
+            className="h-12 font-mono text-base"
+            placeholder={printer.transport === "serial" ? "COM3" : WINDOWS_SHARE_EXAMPLE}
+            value={printer.device}
+            onChange={(event) => patch({ device: event.target.value })}
+          />
+          <p className="text-sm text-muted-foreground">
+            {printer.transport === "serial"
+              ? "El puerto tal cual lo muestra el Administrador de dispositivos."
+              : "La cola tiene que estar compartida y configurada como impresora de texto genérico."}
+          </p>
+        </div>
+      )}
+
+      {printer.transport !== "none" && (
+        <div className="flex flex-wrap gap-3">
+          <div className="flex w-32 flex-col gap-1.5">
+            <label htmlFor={`${slug}-labelwidth`} className="text-sm font-medium">
+              {isLabelPrinter ? "Ancho (mm)" : "Ancho del rollo (mm)"}
+            </label>
+            <Input
+              id={`${slug}-labelwidth`}
+              type="number"
+              className="h-12 text-base"
+              value={printer.labelWidthMm}
+              onChange={(event) => patch({ labelWidthMm: Number(event.target.value) || 50 })}
+            />
+          </div>
+          {isLabelPrinter && (
+          <div className="flex w-32 flex-col gap-1.5">
+            <label htmlFor={`${slug}-labelheight`} className="text-sm font-medium">
+              Alto (mm)
+            </label>
+            <Input
+              id={`${slug}-labelheight`}
+              type="number"
+              className="h-12 text-base"
+              value={printer.labelHeightMm}
+              onChange={(event) => patch({ labelHeightMm: Number(event.target.value) || 25 })}
+            />
+          </div>
+          )}
+          {isLabelPrinter && (
+          <div className="flex w-40 flex-col gap-1.5">
+            <label htmlFor={`${slug}-dpi`} className="text-sm font-medium">
+              Resolución
+            </label>
+            <select
+              id={`${slug}-dpi`}
+              className="h-12 rounded-lg border bg-background px-3 text-base"
+              value={printer.dpi}
+              onChange={(event) =>
+                patch({ dpi: Number(event.target.value) as PrinterConfig["dpi"] })
+              }
+            >
+              <option value={203}>203 dpi</option>
+              <option value={300}>300 dpi</option>
+            </select>
+          </div>
+          )}
+        </div>
+      )}
+
+      {printer.transport !== "none" && (
+        <p className="text-sm text-muted-foreground">
+          {isLabelPrinter
+            ? "El ticket del digitalizador se imprime al doble del alto configurado, porque lleva más información y no se pega a ninguna prenda."
+            : "En papel continuo no hay alto de etiqueta: el ancho del rollo (58 u 80 mm) decide cuántas columnas de texto caben, y cada impreso termina con un corte."}
+        </p>
+      )}
+    </section>
   );
 }
 

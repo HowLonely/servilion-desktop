@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { FilePlus2, LogOut, PackageCheck, Settings } from "lucide-react";
+import { BedDouble, FilePlus2, History, LogOut, PackageCheck, Scale, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ServerStatusBadge } from "@/components/server-status-badge";
@@ -12,6 +12,11 @@ const STATION_CARDS: Record<
   Station,
   { title: string; description: string; icon: typeof FilePlus2 }
 > = {
+  weighing: {
+    title: "Pesaje y etiquetado",
+    description: "Pesar el morral de ropa sucia e imprimir sus etiquetas.",
+    icon: Scale,
+  },
   digitize: {
     title: "Digitalizar OT",
     description: "Pasar al sistema la OT física de la ropa sucia recibida.",
@@ -22,11 +27,22 @@ const STATION_CARDS: Record<
     description: "Pistolear cada prenda del morral limpio y validar que esté completo.",
     icon: PackageCheck,
   },
+  hospitality: {
+    title: "Lencería de hotelería",
+    description: "Carga a granel del campamento: cuánto entró, cuánto volvió y la merma.",
+    icon: BedDouble,
+  },
+  history: {
+    title: "Consultar histórico",
+    description: "Guías y trabajadores, con los mismos filtros del panel web.",
+    icon: History,
+  },
 };
 
 /**
- * Solo aparece cuando el usuario tiene permiso para ambas estaciones. Se elige
- * con el teclado (1, 2) porque en digitación la mano no está en el mouse.
+ * Solo aparece cuando el usuario tiene permiso para más de una estación. Se
+ * elige con las teclas numéricas porque en digitación la mano no está en el
+ * mouse; en una terminal táctil se toca la tarjeta, que por eso es grande.
  */
 export function StationMenu({
   stations,
@@ -81,7 +97,7 @@ export function StationMenu({
       </header>
 
       <div className="flex min-h-0 flex-1 items-center justify-center p-6">
-        <div className="grid w-full max-w-3xl gap-5 sm:grid-cols-2">
+        <div className="grid w-full max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {stations.map((station, index) => {
             const card = STATION_CARDS[station];
             const Icon = card.icon;

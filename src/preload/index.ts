@@ -6,9 +6,12 @@ import type {
   ConnectionTest,
   LoginRequest,
   LoginResult,
+  PrintResult,
+  ReceiptPrintJob,
   ServerStatus,
   SessionState,
   StationConfig,
+  WeighPrintJob,
 } from "../shared/types";
 
 // Superficie mínima expuesta al renderer. No hay `ipcRenderer` suelto ni acceso
@@ -49,6 +52,15 @@ const servilion = {
       ipcRenderer.on("server:status", handler);
       return () => ipcRenderer.off("server:status", handler);
     },
+  },
+
+  printer: {
+    /** Imprime (o reimprime) el juego de etiquetas de un pesaje. */
+    weighLabels: (job: WeighPrintJob): Promise<PrintResult> =>
+      ipcRenderer.invoke("printer:weighLabels", job),
+    /** Imprime (o reimprime) la boleta que acompaña el morral limpio. */
+    receipt: (job: ReceiptPrintJob): Promise<PrintResult> =>
+      ipcRenderer.invoke("printer:receipt", job),
   },
 
   app: {

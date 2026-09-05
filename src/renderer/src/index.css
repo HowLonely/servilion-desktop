@@ -175,3 +175,60 @@
     overscroll-behavior: none;
   }
 }
+
+/* --- Modo pantalla táctil ---------------------------------------------------
+
+   Se activa en Ajustes del equipo (`StationConfig.touchMode`) y marca el <html>
+   con `data-touch`. Es un ajuste del equipo y no del usuario: lo táctil es el
+   monitor, no la persona.
+
+   Lo que cambia es lo que el dedo necesita y el mouse no: superficie de toque
+   suficiente (44 px es el mínimo con el que un dedo acierta sin mirar), texto
+   más grande porque la báscula se opera de pie y a un brazo de distancia, y
+   ningún efecto :hover, que en una pantalla táctil se queda pegado después de
+   tocar. Las tres estaciones lo respetan, así que un mismo PC táctil se siente
+   igual en cualquiera de ellas.
+   ------------------------------------------------------------------------- */
+@layer base {
+  html[data-touch="true"] {
+    /* Sube la escala tipográfica base: todo lo dimensionado en rem crece con
+       ella sin tener que duplicar clases por pantalla. */
+    font-size: 18px;
+  }
+
+  html[data-touch="true"] button,
+  html[data-touch="true"] [role="button"],
+  html[data-touch="true"] a[href],
+  html[data-touch="true"] input,
+  html[data-touch="true"] select,
+  html[data-touch="true"] textarea {
+    min-height: 44px;
+  }
+
+  html[data-touch="true"] button,
+  html[data-touch="true"] [role="button"] {
+    min-width: 44px;
+  }
+
+  /* Sin selección de texto por arrastre: en táctil, mantener el dedo sobre una
+     etiqueta abre el menú de selección en vez de accionar el botón. */
+  html[data-touch="true"] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html[data-touch="true"] input,
+  html[data-touch="true"] textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* El :hover no existe en táctil, pero el navegador lo simula y lo deja
+     pegado en el último elemento tocado. Se anula bajo un @media para no
+     afectar a un equipo mixto con mouse conectado. */
+  @media (hover: none) {
+    html[data-touch="true"] *:hover {
+      transition: none;
+    }
+  }
+}

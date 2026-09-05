@@ -3,6 +3,7 @@ import { app, ipcMain, type BrowserWindow } from "electron";
 import { httpRequest } from "./api";
 import { getConfig, normalizeServerUrl, setConfig } from "./config";
 import { checkNow, getServerStatus, resetStatus } from "./health";
+import { printReceipt, printWeighLabels } from "./printer";
 import {
   authorizedRequest,
   getSessionState,
@@ -17,9 +18,12 @@ import type {
   ConnectionTest,
   LoginRequest,
   LoginResult,
+  PrintResult,
+  ReceiptPrintJob,
   ServerStatus,
   SessionState,
   StationConfig,
+  WeighPrintJob,
 } from "../shared/types";
 
 export const SESSION_EXPIRED_CHANNEL = "session:expired";
@@ -117,6 +121,18 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
 
   ipcMain.handle("server:getStatus", (): ServerStatus => getServerStatus());
   ipcMain.handle("server:check", (): Promise<ServerStatus> => checkNow(getWindow()));
+
+  // --- Impresora de etiquetas ---
+
+  ipcMain.handle(
+    "printer:weighLabels",
+    (_event, job: WeighPrintJob): Promise<PrintResult> => printWeighLabels(job),
+  );
+
+  ipcMain.handle(
+    "printer:receipt",
+    (_event, job: ReceiptPrintJob): Promise<PrintResult> => printReceipt(job),
+  );
 
   // --- Ventana ---
 

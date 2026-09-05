@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import path from "node:path";
 
 // Las terminales integradas de VS Code exportan ELECTRON_RUN_AS_NODE=1 (VS Code
 // es a su vez una app Electron). Heredarla hace que nuestro Electron arranque
@@ -10,7 +11,11 @@ import { spawn } from "node:child_process";
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 
-const child = spawn("electron-vite", process.argv.slice(2), {
+const electronViteCommand = process.platform === "win32"
+  ? path.join(process.cwd(), "node_modules", ".bin", "electron-vite.cmd")
+  : path.join(process.cwd(), "node_modules", ".bin", "electron-vite");
+
+const child = spawn(electronViteCommand, process.argv.slice(2), {
   env,
   stdio: "inherit",
   shell: true,

@@ -22,6 +22,7 @@ import {
   type OrderFormValues,
 } from "@/features/orders/schemas/order-schema";
 import { useWorker } from "@/features/workers/use-workers";
+import { WeighInLookup } from "@/features/digitize/weigh-in-lookup";
 import { WorkerSelect } from "@/features/workers/worker-select";
 
 import type { components } from "@/lib/api/schema";
@@ -69,12 +70,12 @@ export function CreateOrderForm({
     defaultValues: {
       order_number: "",
       worker_id: 0,
+      weigh_in_id: null,
       ticket_number: "",
       shift: "",
       weight_kg: null,
       received_at: `${dateInputDaysAgo(0)}T${new Date().toTimeString().slice(0, 5)}`,
       observations: "",
-      reference: "",
       control_code: "",
       items: [],
     },
@@ -83,6 +84,11 @@ export function CreateOrderForm({
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   const items = watch("items");
   const workerId = watch("worker_id");
+  const weighInId = watch("weigh_in_id");
+  // Lo que declaró la báscula, para mostrarlo junto a lo que va contando el
+  // digitador. No se guarda en el formulario: la guía lleva el conteo real y el
+  // pesaje conserva el suyo (el backend deja las dos cifras a la vista).
+  const [weighedCount, setWeighedCount] = useState<number | null>(null);
   const { data: worker } = useWorker(workerId > 0 ? workerId : undefined);
   const { data: company } = useCompany(worker?.company_id);
 
@@ -125,6 +131,24 @@ export function CreateOrderForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-8">
+      {/* 0 · Ticket de pesaje */}
+      <WeighInLookup
+        weighInId={weighInId}
+        onFound={(weighIn) => {
+          // El ref viaja impreso en los adhesivos que ya están pegados a la
+          // ropa, así que la guía tiene que nacer con ese mismo código: se
+          // copia al formulario en vez de dejar que el backend genere otro.
+          setValue("weigh_in_id", weighIn.id);
+          setValue("weight_kg", weighIn.weight_kg);
+          setWeighedCount(weighIn.garment_count);
+        }}
+        onClear={() => {
+          setValue("weigh_in_id", null);
+          setValue("weight_kg", null);
+          setWeighedCount(null);
+        }}
+      />
+
       {/* 1 · Datos de la OT */}
       <section className="flex flex-col gap-4">
         <SectionTitle number={1}>Datos de la OT</SectionTitle>
@@ -133,7 +157,6 @@ export function CreateOrderForm({
           <BigField label="N° de OT" htmlFor="order_number" error={errors.order_number?.message}>
             <Input
               id="order_number"
-              autoFocus
               className="h-12 text-lg"
               {...register("order_number")}
             />
@@ -281,6 +304,13 @@ export function CreateOrderForm({
             <div className="flex items-center justify-end border-t bg-muted/40 px-3 py-3">
               <span className="text-2xl font-bold tabular-nums">
                 {totalUnits} {totalUnits === 1 ? "prenda" : "prendas"}
+                {weighedCount !== null && totalUnits !== weighedCount && (
+                  // Manda el digitador: la guía queda con el conteo real y la
+                  // báscula conserva el suyo. Se avisa, no se bloquea.
+                  <span className="ml-2 font-normal text-amber-600">
+                    · la báscula contó {weighedCount}
+                  </span>
+                )}
               </span>
             </div>
           </div>

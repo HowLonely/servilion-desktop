@@ -2,39 +2,40 @@
 // el backend (orders/models.py OrderStatus). No se inventan transiciones
 // nuevas aquí: la validación real de qué transición es válida la hace el
 // backend. RECIBIDA cubre desde que se digitaliza la guía hasta el primer
-// pistoleo de empaque (no hay un evento físico propio de "en lavado"), y ya
-// no existe un estado "despachada": no hay ningún pistoleo que represente
-// "salió de planta", así que ese concepto quedó absorbido por COMPLETADA.
+// pistoleo de empaque (no hay un evento físico propio de "en lavado").
+//
+// INCOMPLETA y COMPLETA son las dos salidas del CIERRE del morral, no del
+// despacho: dicen con qué quedó el morral, no dónde está. DESPACHADA es el
+// paso siguiente y tiene su propio pistoleo —el tercer disparo de la boleta.
+//
+// COBRADA se retiró del flujo: el cobro es un acto administrativo fuera del
+// sistema, sin ningún escaneo detrás. ENTREGADA (Flujo 1) y DESPACHADA
+// (Flujo 2) son los estados terminales.
 export const ORDER_STATUSES = [
   "RECIBIDA",
   "EN_REVISION",
   "INCOMPLETA",
   "COMPLETADA",
+  "DESPACHADA",
   "ENTREGADA",
-  "COBRADA",
 ] as const;
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-// Transiciones que el staff puede declarar a mano con el botón "Marcar como X"
-// (ver OrderStatusActions). RECIBIDA -> EN_REVISION, EN_REVISION/INCOMPLETA ->
-// COMPLETADA no aparecen a propósito: el sistema las decide solo, como efecto
-// de digitalizar la guía, de pistolear el empaque y de resolver una prenda
-// faltante (encontrada o comprada). Solo queda manual el cobro, un acto
-// administrativo sin ningún escaneo detrás.
+// Transiciones que el staff puede declarar a mano con el botón "Marcar como X".
+// RECIBIDA -> EN_REVISION, EN_REVISION/INCOMPLETA -> COMPLETADA y
+// COMPLETADA/INCOMPLETA -> DESPACHADA no aparecen a propósito: el sistema las
+// decide solo, como efecto de digitalizar la guía, de pistolear el empaque, de
+// resolver una prenda faltante (encontrada o comprada) y de pistolear la
+// boleta de un morral ya cerrado.
 export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   RECIBIDA: [],
   EN_REVISION: [],
   INCOMPLETA: [],
-  COMPLETADA: ["ENTREGADA"],
-  ENTREGADA: ["COBRADA"],
-  COBRADA: [],
-};
-
-// Flujo 2 (entrega solo al cliente): el morral se entrega al mandante sin
-// trazabilidad individual, así que la guía se cobra directo desde completada.
-export const FLOW_2_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
-  COMPLETADA: ["COBRADA"],
+  // Cerrado no es despachado: la entrega cuelga del despacho, no del cierre.
+  COMPLETADA: [],
+  DESPACHADA: ["ENTREGADA"],
+  ENTREGADA: [],
 };
 
 export type DeliveryFlow = "FLUJO_1" | "FLUJO_2";
@@ -48,9 +49,9 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   RECIBIDA: "Recibida",
   EN_REVISION: "En revisión",
   INCOMPLETA: "Incompleta",
-  COMPLETADA: "Completada",
+  COMPLETADA: "Completa",
+  DESPACHADA: "Despachada",
   ENTREGADA: "Entregada",
-  COBRADA: "Cobrada",
 };
 
 export const ORDER_STATUS_BADGE_VARIANT: Record<
@@ -61,8 +62,8 @@ export const ORDER_STATUS_BADGE_VARIANT: Record<
   EN_REVISION: "default",
   INCOMPLETA: "destructive",
   COMPLETADA: "outline",
+  DESPACHADA: "outline",
   ENTREGADA: "outline",
-  COBRADA: "secondary",
 };
 
 // Colores semánticos por estado para las insignias. Cada estado tiene un tono
@@ -91,15 +92,15 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, StatusColor> = {
       "bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20",
     dot: "bg-emerald-500",
   },
+  DESPACHADA: {
+    badge:
+      "bg-sky-50 text-sky-700 ring-sky-600/15 dark:bg-sky-400/10 dark:text-sky-300 dark:ring-sky-400/20",
+    dot: "bg-sky-500",
+  },
   ENTREGADA: {
     badge:
       "bg-teal-50 text-teal-700 ring-teal-600/15 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/20",
     dot: "bg-teal-500",
-  },
-  COBRADA: {
-    badge:
-      "bg-violet-50 text-violet-700 ring-violet-600/15 dark:bg-violet-400/10 dark:text-violet-300 dark:ring-violet-400/20",
-    dot: "bg-violet-500",
   },
 };
 
@@ -121,7 +122,7 @@ export function validNextStatuses(
   if (!isOrderStatus(status)) return [];
   const base = ORDER_STATUS_TRANSITIONS[status];
   if (deliveryFlow !== "FLUJO_2") return base;
-  // En Flujo 2 la entrega en habitación no existe: se reemplaza por el cobro.
-  const flow2 = FLOW_2_TRANSITIONS[status] ?? [];
-  return [...base.filter((next) => next !== "ENTREGADA"), ...flow2];
+  // En Flujo 2 la entrega en habitación no existe, así que DESPACHADA es
+  // terminal: no hay transición manual siguiente.
+  return base.filter((next) => next !== "ENTREGADA");
 }

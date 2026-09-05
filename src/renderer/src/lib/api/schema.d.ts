@@ -274,6 +274,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/faenas/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Faenas */
+        get: operations["camps_api_list_faenas"];
+        put?: never;
+        /**
+         * Create Faena
+         * @description Crear una faena es excepcional: solo al empezar a atender un sitio nuevo.
+         */
+        post: operations["camps_api_create_faena"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/faenas/{faena_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Faena */
+        get: operations["camps_api_get_faena"];
+        /** Update Faena */
+        put: operations["camps_api_update_faena"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/camps/": {
         parameters: {
             query?: never;
@@ -351,6 +390,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/weighing/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Weigh Ins
+         * @description Pesajes recientes. `mine=true` es "los de mi turno" en la báscula.
+         */
+        get: operations["weighing_api_list_weigh_ins"];
+        put?: never;
+        /**
+         * Create Weigh In
+         * @description Pesa el morral, emite el ref y crea sus etiquetas.
+         */
+        post: operations["weighing_api_create_weigh_in"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weighing/pending/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find Pending Weigh In
+         * @description Resuelve el ref del ticket maestro para que la digitación lo consuma.
+         *
+         *     Sin restricción de rol: quien digitaliza necesita leerlo, y no expone nada
+         *     que la guía resultante no vaya a mostrar de todas formas.
+         */
+        get: operations["weighing_api_find_pending_weigh_in"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weighing/{weigh_in_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Weigh In */
+        get: operations["weighing_api_get_weigh_in"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weighing/{weigh_in_id}/print": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Print Job
+         * @description Datos para (re)imprimir los adhesivos y el ticket maestro.
+         */
+        get: operations["weighing_api_get_print_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weighing/{weigh_in_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void Weigh In */
+        post: operations["weighing_api_void_weigh_in"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orders/": {
         parameters: {
             query?: never;
@@ -386,6 +526,30 @@ export interface paths {
          * @description Pistoleo del morral sucio en faena (paso 2), previo a la digitalización.
          */
         post: operations["orders_api_register_site_reception"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/scan/packing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan Packing Code
+         * @description Pistoleo único de la mesa de empaque (paso 6).
+         *
+         *     Un solo endpoint para los dos códigos que hay sobre la mesa: la boleta del
+         *     morral abre y cierra, y la etiqueta lavable de una prenda abre y marca en el
+         *     mismo disparo. El operador no elige modo en pantalla.
+         */
+        post: operations["orders_api_scan_packing_code"];
         delete?: never;
         options?: never;
         head?: never;
@@ -489,40 +653,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/orders/reports/billing": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Request Billing Report */
-        post: operations["orders_api_request_billing_report"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/orders/reports/billing/{task_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Billing Report */
-        get: operations["orders_api_get_billing_report"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/orders/{order_id}": {
         parameters: {
             query?: never;
@@ -569,6 +699,26 @@ export interface paths {
          * @description Datos de la boleta impresa que acompaña el morral limpio de vuelta a faena.
          */
         get: operations["orders_api_get_receipt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{order_id}/garment-labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Garment Labels
+         * @description Etiquetas lavables a imprimir, una por prenda declarada en la guía (paso 4).
+         */
+        get: operations["orders_api_get_garment_labels"];
         put?: never;
         post?: never;
         delete?: never;
@@ -645,6 +795,30 @@ export interface paths {
          * @description Cierra el empaque: completa la guía o la marca incompleta según el pistoleo.
          */
         post: operations["orders_api_finish_packing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/orders/{order_id}/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dispatch Order
+         * @description Despacha a faena un morral ya cerrado (paso 7).
+         *
+         *     La vía normal es el tercer pistoleo de la boleta en la mesa de empaque
+         *     (`/scan/packing`); este endpoint es el equivalente por id para el panel,
+         *     igual que `/packing/finish` lo es del segundo disparo.
+         */
+        post: operations["orders_api_dispatch_order"];
         delete?: never;
         options?: never;
         head?: never;
@@ -763,6 +937,141 @@ export interface paths {
          *     el operador confirma que el trabajador se mudó.
          */
         post: operations["orders_delivery_api_confirm_delivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Batches */
+        get: operations["hospitality_api_list_batches"];
+        put?: never;
+        /**
+         * Create Batch
+         * @description Registra la llegada de una carga de lencería sucia del campamento.
+         */
+        post: operations["hospitality_api_create_batch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/counters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Counters
+         * @description Indicadores del servicio: lotes en planta, piezas y merma acumulada.
+         */
+        get: operations["hospitality_api_get_counters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Batch */
+        get: operations["hospitality_api_get_batch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/{batch_id}/note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Batch Note
+         * @description Acta de devolución que el encargado del campamento revisa y firma.
+         */
+        get: operations["hospitality_api_get_batch_note"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/{batch_id}/process": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Processing */
+        post: operations["hospitality_api_start_processing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/{batch_id}/return-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register Return Count
+         * @description Cuenta de salida por tipo de lencería: es donde aparece la merma.
+         */
+        post: operations["hospitality_api_register_return_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/{batch_id}/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dispatch Batch
+         * @description Despacha la carga limpia de vuelta a faena y cierra el lote.
+         */
+        post: operations["hospitality_api_dispatch_batch"];
         delete?: never;
         options?: never;
         head?: never;
@@ -940,6 +1249,12 @@ export interface components {
             name: string;
             /** Tax Id */
             tax_id: string;
+            /** Faena Id */
+            faena_id: number | null;
+            /** Faena Name */
+            faena_name: string;
+            /** Reference Prefix */
+            reference_prefix: string;
             /** Contact Name */
             contact_name: string;
             /** Phone */
@@ -967,6 +1282,13 @@ export interface components {
              * @default
              */
             tax_id: string;
+            /** Faena Id */
+            faena_id?: number | null;
+            /**
+             * Reference Prefix
+             * @default
+             */
+            reference_prefix: string;
             /**
              * Contact Name
              * @default
@@ -1052,16 +1374,24 @@ export interface components {
             client_id: number;
             /** Client Name */
             client_name: string;
+            /** Faena Id */
+            faena_id: number | null;
+            /** Faena Name */
+            faena_name: string;
             /** Name */
             name: string;
             /** Tax Id */
             tax_id: string;
+            /** Client Role */
+            client_role: string;
+            /** Is Contractor */
+            is_contractor: boolean;
             /** Billing Type */
             billing_type: string;
+            /** Service Type */
+            service_type: string;
             /** Delivery Flow */
             delivery_flow: string;
-            /** Reference Prefix */
-            reference_prefix: string;
             /** Contact Name */
             contact_name: string;
             /** Phone */
@@ -1084,6 +1414,13 @@ export interface components {
             name: string;
             /** Client Id */
             client_id?: number | null;
+            /** Faena Id */
+            faena_id?: number | null;
+            /**
+             * Client Role
+             * @default CONTRATISTA
+             */
+            client_role: string;
             /**
              * Tax Id
              * @default
@@ -1095,15 +1432,15 @@ export interface components {
              */
             billing_type: string;
             /**
+             * Service Type
+             * @default PERSONAL
+             */
+            service_type: string;
+            /**
              * Delivery Flow
              * @default FLUJO_1
              */
             delivery_flow: string;
-            /**
-             * Reference Prefix
-             * @default
-             */
-            reference_prefix: string;
             /**
              * Contact Name
              * @default
@@ -1242,14 +1579,42 @@ export interface components {
              */
             is_active: boolean;
         };
+        /** FaenaOut */
+        FaenaOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Camps Count */
+            camps_count: number;
+        };
+        /** PagedFaenaOut */
+        PagedFaenaOut: {
+            /** Items */
+            items: components["schemas"]["FaenaOut"][];
+            /** Count */
+            count: number;
+        };
+        /** FaenaIn */
+        FaenaIn: {
+            /** Name */
+            name: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
         /** CampOut */
         CampOut: {
             /** Id */
             id: number;
-            /** Client Id */
-            client_id: number;
-            /** Client Name */
-            client_name: string;
+            /** Faena Id */
+            faena_id: number;
+            /** Faena Name */
+            faena_name: string;
             /** Name */
             name: string;
             /** Is Active */
@@ -1266,8 +1631,8 @@ export interface components {
         };
         /** CampIn */
         CampIn: {
-            /** Client Id */
-            client_id: number;
+            /** Faena Id */
+            faena_id: number;
             /** Name */
             name: string;
             /**
@@ -1291,8 +1656,8 @@ export interface components {
             camp_id: number;
             /** Camp Name */
             camp_name: string;
-            /** Client Id */
-            client_id: number;
+            /** Faena Id */
+            faena_id: number;
             /** Number */
             number: string;
             /**
@@ -1314,6 +1679,124 @@ export interface components {
              * @default true
              */
             is_active: boolean;
+        };
+        /** WeighInOut */
+        WeighInOut: {
+            /** Id */
+            id: number;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Status Label */
+            status_label: string;
+            /** Client Id */
+            client_id: number;
+            /** Client Name */
+            client_name: string;
+            /** Company Id */
+            company_id: number;
+            /** Company Name */
+            company_name: string;
+            /** Faena */
+            faena: string;
+            /** Is Contractor */
+            is_contractor: boolean;
+            /** Garment Count */
+            garment_count: number;
+            /** Weight Kg */
+            weight_kg: number;
+            /**
+             * Weighed At
+             * Format: date-time
+             */
+            weighed_at: string;
+            /** Weighed By Name */
+            weighed_by_name: string;
+            /** Order Id */
+            order_id: number | null;
+            /** Order Number */
+            order_number: string;
+            /** Digitized At */
+            digitized_at: string | null;
+            /** Voided At */
+            voided_at: string | null;
+            /** Void Reason */
+            void_reason: string;
+            /** Labels */
+            labels: components["schemas"]["WeighLabelOut"][];
+        };
+        /**
+         * WeighLabelOut
+         * @description Un adhesivo. `code` es a la vez lo impreso y lo que lee la pistola.
+         */
+        WeighLabelOut: {
+            /** Sequence */
+            sequence: number;
+            /** Code */
+            code: string;
+            /** Scanned At */
+            scanned_at: string | null;
+        };
+        /**
+         * WeighInIn
+         * @description Lo que la báscula manda: los cuatro datos que el operador toca en pantalla.
+         *
+         *     No lleva `reference` ni fecha: el ref lo emite el servidor (es un correlativo
+         *     que debe serializarse entre estaciones) y el momento del pesaje es el de la
+         *     petición, no uno que el operador pueda elegir.
+         */
+        WeighInIn: {
+            /** Client Id */
+            client_id: number;
+            /** Company Id */
+            company_id: number;
+            /** Garment Count */
+            garment_count: number;
+            /** Weight Kg */
+            weight_kg: number;
+        };
+        /**
+         * PrintJobOut
+         * @description Datos para imprimir, sin layout: el cliente arma el ZPL.
+         *
+         *     Misma convención que `orders.services.build_receipt` y `build_garment_labels`:
+         *     el backend no sabe de milímetros ni de modelos de impresora. Aquí la que
+         *     imprime es la terminal de escritorio, que además es la única que conoce el
+         *     puerto donde está colgada la etiquetera.
+         */
+        PrintJobOut: {
+            /** Reference */
+            reference: string;
+            /** Client Name */
+            client_name: string;
+            /** Company Name */
+            company_name: string;
+            /** Faena */
+            faena: string;
+            /** Is Contractor */
+            is_contractor: boolean;
+            /** Garment Count */
+            garment_count: number;
+            /** Weight Kg */
+            weight_kg: number;
+            /**
+             * Weighed At
+             * Format: date-time
+             */
+            weighed_at: string;
+            /** Weighed By Name */
+            weighed_by_name: string;
+            /** Labels */
+            labels: components["schemas"]["WeighLabelOut"][];
+        };
+        /** VoidWeighInIn */
+        VoidWeighInIn: {
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
         };
         /**
          * CleanReceptionOut
@@ -1352,6 +1835,8 @@ export interface components {
             company_id: number;
             /** Company Name */
             company_name: string;
+            /** Company Logo Url */
+            company_logo_url: string | null;
             /** Client Id */
             client_id: number;
             /** Client Name */
@@ -1383,12 +1868,12 @@ export interface components {
             incomplete_at: string | null;
             /** Completed At */
             completed_at: string | null;
+            /** Dispatched At */
+            dispatched_at: string | null;
             /** Clean Receptions */
             clean_receptions: components["schemas"]["CleanReceptionOut"][];
             /** Delivered At */
             delivered_at: string | null;
-            /** Billed At */
-            billed_at: string | null;
             /** Observations */
             observations: string;
             /** Reference */
@@ -1403,12 +1888,16 @@ export interface components {
             camp_name: string;
             /** Photo Url */
             photo_url: string | null;
-            /** Billed Amount */
-            billed_amount: number | null;
             /** Items */
             items: components["schemas"]["OrderItemOut"][];
             /** Missing Item Resolutions */
             missing_item_resolutions: components["schemas"]["MissingItemResolutionOut"][];
+            /** Weigh In Id */
+            weigh_in_id: number | null;
+            /** Weighed Garment Count */
+            weighed_garment_count: number | null;
+            /** Weighed At */
+            weighed_at: string | null;
             /**
              * Updated At
              * Format: date-time
@@ -1418,7 +1907,7 @@ export interface components {
         /** MissingItemResolutionOut */
         MissingItemResolutionOut: {
             /** Item Id */
-            item_id: number;
+            item_id: number | null;
             /** Item Code */
             item_code: string;
             /** Item Name */
@@ -1436,6 +1925,8 @@ export interface components {
             resolved_at: string;
             /** Resolved By Name */
             resolved_by_name: string | null;
+            /** Shipped At */
+            shipped_at: string | null;
             /** Note */
             note: string;
         };
@@ -1465,6 +1956,8 @@ export interface components {
             order_number: string;
             /** Worker Id */
             worker_id: number;
+            /** Weigh In Id */
+            weigh_in_id?: number | null;
             /**
              * Ticket Number
              * @default
@@ -1491,11 +1984,6 @@ export interface components {
              * @default
              */
             observations: string;
-            /**
-             * Reference
-             * @default
-             */
-            reference: string;
             /**
              * Control Code
              * @default
@@ -1563,6 +2051,111 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** PackingItemProgressOut */
+        PackingItemProgressOut: {
+            /** Item Id */
+            item_id: number;
+            /** Garment Type Id */
+            garment_type_id: number | null;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Quantity */
+            quantity: number;
+            /** Scanned Quantity */
+            scanned_quantity: number;
+        };
+        /** PackingProgressOut */
+        PackingProgressOut: {
+            /** Order Id */
+            order_id: number;
+            /** Declared Total */
+            declared_total: number;
+            /** Scanned Total */
+            scanned_total: number;
+            /** Is Complete */
+            is_complete: boolean;
+            /** Items */
+            items: components["schemas"]["PackingItemProgressOut"][];
+            /**
+             * Mode
+             * @default tipo
+             */
+            mode: string;
+            /**
+             * Units
+             * @default []
+             */
+            units: components["schemas"]["PackingUnitProgressOut"][];
+        };
+        /**
+         * PackingScanOut
+         * @description Qué hizo el pistoleo: abrió el morral, lo cerró, lo despachó o marcó una prenda.
+         */
+        PackingScanOut: {
+            /** Action */
+            action: string;
+            order: components["schemas"]["LaundryOrderOut"];
+            progress: components["schemas"]["PackingProgressOut"];
+        };
+        /**
+         * PackingUnitProgressOut
+         * @description Una prenda física del morral, identificada por su adhesivo (`P1375A-03`).
+         */
+        PackingUnitProgressOut: {
+            /** Sequence */
+            sequence: number;
+            /** Code */
+            code: string;
+            /** Is Scanned */
+            is_scanned: boolean;
+        };
+        /**
+         * AmbiguousOrderOut
+         * @description Guía candidata cuando un `ref` calza con más de un morral abierto.
+         */
+        AmbiguousOrderOut: {
+            /** Order Id */
+            order_id: number;
+            /** Order Number */
+            order_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Worker Name */
+            worker_name: string;
+            /** Company Name */
+            company_name: string;
+            /** Status */
+            status: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+        };
+        /** AmbiguousReferenceOut */
+        AmbiguousReferenceOut: {
+            /** Detail */
+            detail: string;
+            /** Reference */
+            reference: string;
+            /** Candidates */
+            candidates: components["schemas"]["AmbiguousOrderOut"][];
+        };
+        /**
+         * PackingCodeScanIn
+         * @description Pistoleo único de la mesa de empaque: boleta del morral o etiqueta lavable.
+         */
+        PackingCodeScanIn: {
+            /** Code */
+            code: string;
+            /**
+             * Quantity
+             * @default 1
+             */
+            quantity: number;
         };
         /** SiteCountersOut */
         SiteCountersOut: {
@@ -1703,11 +2296,6 @@ export interface components {
              */
             observations: string;
             /**
-             * Reference
-             * @default
-             */
-            reference: string;
-            /**
              * Control Code
              * @default
              */
@@ -1724,41 +2312,6 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
-        };
-        /** BillingReportTaskOut */
-        BillingReportTaskOut: {
-            /** Task Id */
-            task_id: string;
-        };
-        /**
-         * BillingReportRequestIn
-         * @description Solicita el reporte de facturación. Indicar `client_id` (agrega todas sus
-         *     empresas, con desglose por empresa) o `company_id` (una sola empresa).
-         */
-        BillingReportRequestIn: {
-            /** Company Id */
-            company_id?: number | null;
-            /** Client Id */
-            client_id?: number | null;
-            /**
-             * Date From
-             * Format: date-time
-             */
-            date_from: string;
-            /**
-             * Date To
-             * Format: date-time
-             */
-            date_to: string;
-        };
-        /** BillingReportResultOut */
-        BillingReportResultOut: {
-            /** Status */
-            status: string;
-            /** Result */
-            result?: {
-                [key: string]: unknown;
-            } | null;
         };
         /** OrderStatusHistoryOut */
         OrderStatusHistoryOut: {
@@ -1800,8 +2353,16 @@ export interface components {
             ticket_number: string;
             /** Company Name */
             company_name: string;
+            /** Company Logo Url */
+            company_logo_url: string | null;
+            /** Faena */
+            faena: string;
+            /** Is Contractor */
+            is_contractor: boolean;
             /** Worker Name */
             worker_name: string;
+            /** Phone */
+            phone: string;
             /** National Id */
             national_id: string;
             /** Camp */
@@ -1821,6 +2382,36 @@ export interface components {
             /** Items */
             items: components["schemas"]["ReceiptItemOut"][];
         };
+        /**
+         * GarmentLabelOut
+         * @description Etiqueta lavable de una prenda: una por línea declarada en la guía.
+         */
+        GarmentLabelOut: {
+            /** Order Id */
+            order_id: number;
+            /** Order Number */
+            order_number: string | null;
+            /** Reference */
+            reference: string;
+            /** Label Code */
+            label_code: string;
+            /** Scan Payload */
+            scan_payload: string;
+            /** Garment Name */
+            garment_name: string;
+            /** Worker Name */
+            worker_name: string;
+            /** Company Name */
+            company_name: string;
+            /** Faena */
+            faena: string;
+            /** Is Contractor */
+            is_contractor: boolean;
+            /** Camp */
+            camp: string;
+            /** Quantity */
+            quantity: number;
+        };
         /** StatusUpdateIn */
         StatusUpdateIn: {
             /** Status */
@@ -1830,34 +2421,6 @@ export interface components {
              * @default
              */
             note: string;
-        };
-        /** PackingItemProgressOut */
-        PackingItemProgressOut: {
-            /** Item Id */
-            item_id: number;
-            /** Garment Type Id */
-            garment_type_id: number | null;
-            /** Code */
-            code: string;
-            /** Name */
-            name: string;
-            /** Quantity */
-            quantity: number;
-            /** Scanned Quantity */
-            scanned_quantity: number;
-        };
-        /** PackingProgressOut */
-        PackingProgressOut: {
-            /** Order Id */
-            order_id: number;
-            /** Declared Total */
-            declared_total: number;
-            /** Scanned Total */
-            scanned_total: number;
-            /** Is Complete */
-            is_complete: boolean;
-            /** Items */
-            items: components["schemas"]["PackingItemProgressOut"][];
         };
         /**
          * PackingScanIn
@@ -1991,6 +2554,230 @@ export interface components {
              */
             confirm_different_room: boolean;
         };
+        /** LinenBatchItemOut */
+        LinenBatchItemOut: {
+            /** Id */
+            id: number;
+            /** Garment Type Id */
+            garment_type_id: number | null;
+            /** Name */
+            name: string;
+            /** Quantity In */
+            quantity_in: number;
+            /** Quantity Out */
+            quantity_out: number | null;
+            /** Shortage */
+            shortage: number | null;
+            /** Weight Kg */
+            weight_kg: number | null;
+        };
+        /** LinenBatchOut */
+        LinenBatchOut: {
+            /** Id */
+            id: number;
+            /** Batch Number */
+            batch_number: string;
+            /** Company Id */
+            company_id: number;
+            /** Company Name */
+            company_name: string;
+            /** Company Logo Url */
+            company_logo_url: string | null;
+            /** Camp Id */
+            camp_id: number | null;
+            /** Camp Name */
+            camp_name: string;
+            /** Status */
+            status: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Promised At */
+            promised_at: string | null;
+            /** Dispatched At */
+            dispatched_at: string | null;
+            /** Weight Kg */
+            weight_kg: number | null;
+            /** Observations */
+            observations: string;
+            /** Received By Client */
+            received_by_client: string;
+            /** Items */
+            items: components["schemas"]["LinenBatchItemOut"][];
+            /** Total In */
+            total_in: number;
+            /** Total Out */
+            total_out: number | null;
+            /** Shortage */
+            shortage: number | null;
+            /** Is Counted */
+            is_counted: boolean;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** PagedLinenBatchOut */
+        PagedLinenBatchOut: {
+            /** Items */
+            items: components["schemas"]["LinenBatchOut"][];
+            /** Count */
+            count: number;
+        };
+        /** LinenBatchIn */
+        LinenBatchIn: {
+            /** Company Id */
+            company_id: number;
+            /** Camp Id */
+            camp_id?: number | null;
+            /** Received At */
+            received_at?: string | null;
+            /** Promised At */
+            promised_at?: string | null;
+            /** Weight Kg */
+            weight_kg?: number | null;
+            /**
+             * Observations
+             * @default
+             */
+            observations: string;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["LinenBatchItemIn"][];
+        };
+        /**
+         * LinenBatchItemIn
+         * @description Una línea de la carga: tipo de lencería y cuánto entró.
+         *
+         *     `garment_type_id` es opcional porque el campamento manda lencería que no
+         *     siempre está en el catálogo; en ese caso llega `custom_name`.
+         */
+        LinenBatchItemIn: {
+            /** Garment Type Id */
+            garment_type_id?: number | null;
+            /**
+             * Custom Name
+             * @default
+             */
+            custom_name: string;
+            /** Quantity In */
+            quantity_in: number;
+            /** Weight Kg */
+            weight_kg?: number | null;
+        };
+        /** HospitalityCountersOut */
+        HospitalityCountersOut: {
+            /** Batches */
+            batches: number;
+            /** In Plant */
+            in_plant: number;
+            /** Dispatched */
+            dispatched: number;
+            /** Weight Kg */
+            weight_kg: number | null;
+            /** Pieces In */
+            pieces_in: number;
+            /** Pieces Out */
+            pieces_out: number;
+            /** Shortage */
+            shortage: number;
+            /** Shortage Rate */
+            shortage_rate: number | null;
+        };
+        /** BatchNoteItemOut */
+        BatchNoteItemOut: {
+            /** Item Id */
+            item_id: number;
+            /** Name */
+            name: string;
+            /** Quantity In */
+            quantity_in: number;
+            /** Quantity Out */
+            quantity_out: number | null;
+            /** Shortage */
+            shortage: number | null;
+        };
+        /**
+         * BatchNoteOut
+         * @description Acta de devolución que acompaña la carga limpia de vuelta a faena.
+         */
+        BatchNoteOut: {
+            /** Batch Number */
+            batch_number: string;
+            /** Company Name */
+            company_name: string;
+            /** Company Logo Url */
+            company_logo_url: string | null;
+            /** Camp */
+            camp: string;
+            /** Status */
+            status: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Promised At */
+            promised_at: string | null;
+            /** Dispatched At */
+            dispatched_at: string | null;
+            /** Weight Kg */
+            weight_kg: number | null;
+            /** Received By Client */
+            received_by_client: string;
+            /** Observations */
+            observations: string;
+            /** Items */
+            items: components["schemas"]["BatchNoteItemOut"][];
+            /** Total In */
+            total_in: number;
+            /** Total Out */
+            total_out: number | null;
+            /** Shortage */
+            shortage: number | null;
+            /** Is Counted */
+            is_counted: boolean;
+        };
+        /** ReturnCountBatchIn */
+        ReturnCountBatchIn: {
+            /** Counts */
+            counts: components["schemas"]["ReturnCountIn"][];
+        };
+        /**
+         * ReturnCountIn
+         * @description Cuántas piezas de una línea volvieron del lavado.
+         */
+        ReturnCountIn: {
+            /** Item Id */
+            item_id: number;
+            /** Quantity Out */
+            quantity_out: number;
+        };
+        /** DispatchIn */
+        DispatchIn: {
+            /**
+             * Received By Client
+             * @default
+             */
+            received_by_client: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** AgingBucket */
+        AgingBucket: {
+            /** Label */
+            label: string;
+            /** Count */
+            count: number;
+        };
         /** OperationsSummaryOut */
         OperationsSummaryOut: {
             /**
@@ -1998,20 +2785,42 @@ export interface components {
              * Format: date-time
              */
             generated_at: string;
-            /** Wip Total */
-            wip_total: number;
-            /** By Status */
-            by_status: components["schemas"]["StatusCount"][];
+            /** Period Days */
+            period_days: number;
+            /** Received */
+            received: number;
+            /** Produced */
+            produced: number;
+            /** Received Delta Pct */
+            received_delta_pct: number | null;
+            /** Produced Delta Pct */
+            produced_delta_pct: number | null;
+            /** Incomplete */
+            incomplete: number;
+            /** Incomplete Rate */
+            incomplete_rate: number;
+            /** Tat P50 Days */
+            tat_p50_days: number;
+            /** Tat P90 Days */
+            tat_p90_days: number;
+            /** Tat Target Days */
+            tat_target_days: number;
+            /** Tat On Target Pct */
+            tat_on_target_pct: number;
+            /** In Plant */
+            in_plant: number;
+            /** In Plant By Status */
+            in_plant_by_status: components["schemas"]["StatusCount"][];
+            /** Open Incomplete */
+            open_incomplete: number;
             /** Stalled Count */
             stalled_count: number;
-            /** At Risk Count */
-            at_risk_count: number;
-            /** Avg Wip Age Days */
-            avg_wip_age_days: number;
-            /** Received Today */
-            received_today: number;
-            /** Delivered Today */
-            delivered_today: number;
+            /** Oldest In Plant Days */
+            oldest_in_plant_days: number;
+            /** Aging */
+            aging: components["schemas"]["AgingBucket"][];
+            /** By Status */
+            by_status: components["schemas"]["StatusCount"][];
         };
         /** StatusCount */
         StatusCount: {
@@ -2031,9 +2840,10 @@ export interface components {
          * StalledOrderOut
          * @description Una guía que lleva demasiado tiempo en su estado actual.
          *
-         *     `since`, `age_hours` y `threshold_hours` dependen del estado, así que se
-         *     resuelven por fila leyendo el timestamp de entrada que le corresponde
-         *     (STALL_TIMESTAMP). El servicio ya hizo `select_related('company', 'worker')`.
+         *     `since` viene anotado por el servicio (`state_since`: timestamp de entrada al
+         *     estado con fallback a `received_at`). `age_hours` se deriva de él y
+         *     `threshold_hours` sale del umbral del estado. El servicio ya hizo
+         *     `select_related('company', 'worker')`.
          */
         StalledOrderOut: {
             /** Id */
@@ -2054,8 +2864,6 @@ export interface components {
             age_hours: number;
             /** Threshold Hours */
             threshold_hours: number;
-            /** Promised At */
-            promised_at: string | null;
         };
         /** TimeseriesOut */
         TimeseriesOut: {
@@ -2070,6 +2878,8 @@ export interface components {
             date: string;
             /** Received */
             received: number;
+            /** Produced */
+            produced: number;
             /** Delivered */
             delivered: number;
         };
@@ -2838,10 +3648,107 @@ export interface operations {
             };
         };
     };
+    camps_api_list_faenas: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                is_active?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedFaenaOut"];
+                };
+            };
+        };
+    };
+    camps_api_create_faena: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaenaIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaenaOut"];
+                };
+            };
+        };
+    };
+    camps_api_get_faena: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                faena_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaenaOut"];
+                };
+            };
+        };
+    };
+    camps_api_update_faena: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                faena_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaenaIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaenaOut"];
+                };
+            };
+        };
+    };
     camps_api_list_camps: {
         parameters: {
             query?: {
-                client_id?: number | null;
+                faena_id?: number | null;
                 search?: string | null;
                 is_active?: boolean | null;
                 limit?: number;
@@ -2960,7 +3867,7 @@ export interface operations {
         parameters: {
             query?: {
                 camp_id?: number | null;
-                client_id?: number | null;
+                faena_id?: number | null;
                 search?: string | null;
                 is_active?: boolean | null;
                 limit?: number;
@@ -3075,6 +3982,174 @@ export interface operations {
             };
         };
     };
+    weighing_api_list_weigh_ins: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                mine?: boolean;
+                since?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeighInOut"][];
+                };
+            };
+        };
+    };
+    weighing_api_create_weigh_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeighInIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeighInOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    weighing_api_find_pending_weigh_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeighInOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    weighing_api_get_weigh_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weigh_in_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeighInOut"];
+                };
+            };
+        };
+    };
+    weighing_api_get_print_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weigh_in_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintJobOut"];
+                };
+            };
+        };
+    };
+    weighing_api_void_weigh_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weigh_in_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoidWeighInIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeighInOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
     orders_api_list_orders: {
         parameters: {
             query?: {
@@ -3149,6 +4224,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteScanOut"];
+                };
+            };
+        };
+    };
+    orders_api_scan_packing_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PackingCodeScanIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackingScanOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AmbiguousReferenceOut"];
                 };
             };
         };
@@ -3281,52 +4407,6 @@ export interface operations {
             };
         };
     };
-    orders_api_request_billing_report: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BillingReportRequestIn"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BillingReportTaskOut"];
-                };
-            };
-        };
-    };
-    orders_api_get_billing_report: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BillingReportResultOut"];
-                };
-            };
-        };
-    };
     orders_api_get_order: {
         parameters: {
             query?: never;
@@ -3389,6 +4469,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReceiptOut"];
+                };
+            };
+        };
+    };
+    orders_api_get_garment_labels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GarmentLabelOut"][];
                 };
             };
         };
@@ -3486,6 +4588,41 @@ export interface operations {
         };
     };
     orders_api_finish_packing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LaundryOrderOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    orders_api_dispatch_order: {
         parameters: {
             query?: never;
             header?: never;
@@ -3724,6 +4861,235 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeliveryMismatchOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_list_batches: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                company_id?: number | null;
+                search?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedLinenBatchOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_create_batch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinenBatchIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinenBatchOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_get_counters: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HospitalityCountersOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_get_batch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinenBatchOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_get_batch_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchNoteOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_start_processing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinenBatchOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_register_return_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnCountBatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinenBatchOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_dispatch_batch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DispatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinenBatchOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
                 };
             };
         };
