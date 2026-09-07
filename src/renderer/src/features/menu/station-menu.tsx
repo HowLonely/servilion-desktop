@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BedDouble, FilePlus2, History, LogOut, PackageCheck, Scale, Settings } from "lucide-react";
+import { BedDouble, FilePlus2, History, LogOut, PackageCheck, Scale, Settings, Truck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ServerStatusBadge } from "@/components/server-status-badge";
@@ -26,6 +26,11 @@ const STATION_CARDS: Record<
     title: "Empaque y revisión",
     description: "Pistolear cada prenda del morral limpio y validar que esté completo.",
     icon: PackageCheck,
+  },
+  dispatch: {
+    title: "Despacho",
+    description: "Pistolear la boleta de un morral cerrado para sacarlo de planta.",
+    icon: Truck,
   },
   hospitality: {
     title: "Lencería de hotelería",

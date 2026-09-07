@@ -25,6 +25,9 @@ import type { SessionUser } from "@shared/types";
 export const WEIGHING_ROLES = ["ADMIN", "SUPERVISOR", "PESAJE"] as const;
 export const DIGITIZE_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_OT"] as const;
 export const PACKING_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
+// Mismos roles que empaque: el backend exige lo mismo para /dispatch que para
+// /scan/packing, aunque viven en módulos distintos de esta terminal.
+export const DISPATCH_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
 
 // Hotelería reparte sus tres momentos entre los mismos puestos, y por eso vive
 // en esta terminal y no solo en el panel web: quien recibe la carga sucia es el
@@ -66,12 +69,19 @@ export const ROLE_LABELS: Record<string, string> = {
  * registre sábanas como si fueran la ropa de una persona, que es exactamente lo
  * que hacía el sistema antiguo.
  */
-export type Station = "weighing" | "digitize" | "packing" | "hospitality" | "history";
+export type Station =
+  | "weighing"
+  | "digitize"
+  | "packing"
+  | "dispatch"
+  | "hospitality"
+  | "history";
 
 export const STATION_LABELS: Record<Station, string> = {
   weighing: "Pesaje y etiquetado",
   digitize: "Digitalizar OT",
   packing: "Empaque y revisión",
+  dispatch: "Despacho",
   hospitality: "Lencería de hotelería",
   history: "Consultar histórico",
 };
@@ -80,6 +90,8 @@ export type Capabilities = {
   canWeigh: boolean;
   canDigitize: boolean;
   canPack: boolean;
+  /** Despachar a faena un morral ya cerrado (Completo o Incompleto). */
+  canDispatch: boolean;
   /** Recibir una carga de lencería sucia del campamento. */
   canReceiveLinen: boolean;
   /** Contar la salida de la lencería lavada, que es donde aparece la merma. */
@@ -99,6 +111,7 @@ export function capabilitiesOf(user: SessionUser | null): Capabilities {
   const canWeigh = (WEIGHING_ROLES as readonly string[]).includes(role);
   const canDigitize = (DIGITIZE_ROLES as readonly string[]).includes(role);
   const canPack = (PACKING_ROLES as readonly string[]).includes(role);
+  const canDispatch = (DISPATCH_ROLES as readonly string[]).includes(role);
   const canReceiveLinen = (LINEN_RECEIVE_ROLES as readonly string[]).includes(role);
   const canCountLinen = (LINEN_COUNT_ROLES as readonly string[]).includes(role);
   const canDispatchLinen = (LINEN_DISPATCH_ROLES as readonly string[]).includes(role);
@@ -109,6 +122,7 @@ export function capabilitiesOf(user: SessionUser | null): Capabilities {
   if (canWeigh) stations.push("weighing");
   if (canDigitize) stations.push("digitize");
   if (canPack) stations.push("packing");
+  if (canDispatch) stations.push("dispatch");
   // Basta con poder hacer uno de los dos momentos del lote: la estación muestra
   // solo el que corresponde al rol.
   if (canReceiveLinen || canCountLinen) stations.push("hospitality");
@@ -118,6 +132,7 @@ export function capabilitiesOf(user: SessionUser | null): Capabilities {
     canWeigh,
     canDigitize,
     canPack,
+    canDispatch,
     canReceiveLinen,
     canCountLinen,
     canDispatchLinen,
