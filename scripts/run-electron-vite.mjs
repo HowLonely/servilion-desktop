@@ -15,7 +15,15 @@ const electronViteCommand = process.platform === "win32"
   ? path.join(process.cwd(), "node_modules", ".bin", "electron-vite.cmd")
   : path.join(process.cwd(), "node_modules", ".bin", "electron-vite");
 
-const child = spawn(electronViteCommand, process.argv.slice(2), {
+// Con shell:true en Windows, Node solo envuelve en comillas el comando+args ya
+// unidos en un solo string, no cada token por separado — así que una ruta con
+// espacios (como esta, dentro de "Proyecto Servilion") rompe el parseo de
+// cmd.exe en el primer espacio a menos que la citemos nosotros mismos aquí.
+const quotedCommand = process.platform === "win32"
+  ? `"${electronViteCommand}"`
+  : electronViteCommand;
+
+const child = spawn(quotedCommand, process.argv.slice(2), {
   env,
   stdio: "inherit",
   shell: true,
