@@ -1,14 +1,18 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Check, Loader2, Scale, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { parseApiError } from "@/lib/api/errors";
-import { useFindPendingWeighIn } from "@/features/weighing/use-weighing";
+import { cn } from "@/lib/utils";
+import { useFindPendingWeighIn, usePendingWeighIns } from "@/features/weighing/use-weighing";
 
 import type { components } from "@/lib/api/schema";
 
 type WeighInOut = components["schemas"]["WeighInOut"];
+
+// Cuántas sugerencias caben antes de que la lista estorbe más de lo que ayuda.
+const MAX_SUGGESTIONS = 6;
 
 /**
  * Primer paso de la digitación: recuperar el pesaje que trae el morral.
@@ -35,16 +39,34 @@ export function WeighInLookup({
   const [reference, setReference] = useState("");
   const [found, setFound] = useState<WeighInOut | null>(null);
   const [error, setError] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
+  // -1 = nada resaltado (Enter todavía busca lo tipeado tal cual).
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const findWeighIn = useFindPendingWeighIn();
+  const { data: pendingTickets } = usePendingWeighIns();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function lookup(): Promise<void> {
-    const code = reference.trim();
-    if (!code) return;
+  // Sugerencias por prefijo sobre la cola de pendientes ya cargada: no pega
+  // a la red por cada tecla, solo filtra lo que ya se tiene en memoria.
+  const suggestions = useMemo(() => {
+    const query = reference.trim().toUpperCase();
+    const pending = pendingTickets ?? [];
+    const matches = query
+      ? pending.filter((ticket) => ticket.reference.toUpperCase().startsWith(query))
+      : pending;
+    return matches.slice(0, MAX_SUGGESTIONS);
+  }, [pendingTickets, reference]);
+
+  const showSuggestions = isFocused && !suggestionsDismissed && suggestions.length > 0;
+
+  async function lookup(code: string = reference): Promise<void> {
+    const trimmed = code.trim();
+    if (!trimmed) return;
 
     setError("");
     try {
-      const weighIn = await findWeighIn.mutateAsync(code);
+      const weighIn = await findWeighIn.mutateAsync(trimmed);
       setFound(weighIn);
       onFound(weighIn);
     } catch (caught) {
@@ -54,10 +76,19 @@ export function WeighInLookup({
     }
   }
 
+  function selectSuggestion(ticket: WeighInOut): void {
+    setReference(ticket.reference);
+    setSuggestionsDismissed(true);
+    setHighlightedIndex(-1);
+    void lookup(ticket.reference);
+  }
+
   function clear(): void {
     setFound(null);
     setReference("");
     setError("");
+    setSuggestionsDismissed(false);
+    setHighlightedIndex(-1);
     onClear();
     inputRef.current?.focus();
   }
@@ -97,22 +128,58 @@ export function WeighInLookup({
         <span className="text-sm text-muted-foreground">(opcional)</span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="relative flex flex-wrap gap-2">
         <Input
           ref={inputRef}
           autoFocus
           className="h-12 min-w-56 flex-1 font-mono text-lg uppercase"
           placeholder="P1375A"
           value={reference}
+          role="combobox"
+          aria-expanded={showSuggestions}
+          aria-controls="weigh-in-suggestions"
+          aria-activedescendant={
+            highlightedIndex >= 0 ? `weigh-in-suggestion-${highlightedIndex}` : undefined
+          }
           onChange={(event) => {
             setReference(event.target.value);
             setError("");
+            setSuggestionsDismissed(false);
+            setHighlightedIndex(-1);
           }}
+          onFocus={() => {
+            setIsFocused(true);
+            setSuggestionsDismissed(false);
+          }}
+          onBlur={() => setIsFocused(false)}
           onKeyDown={(event) => {
+            // La digitación es un módulo 100% teclado (sin mouse ni touch), así
+            // que las sugerencias tienen que navegarse igual de bien que
+            // cualquier otro campo: flechas para moverse, Enter para elegir.
+            if (showSuggestions && event.key === "ArrowDown") {
+              event.preventDefault();
+              setHighlightedIndex((index) => Math.min(index + 1, suggestions.length - 1));
+              return;
+            }
+            if (showSuggestions && event.key === "ArrowUp") {
+              event.preventDefault();
+              setHighlightedIndex((index) => Math.max(index - 1, -1));
+              return;
+            }
+            if (showSuggestions && event.key === "Escape") {
+              event.preventDefault();
+              setSuggestionsDismissed(true);
+              return;
+            }
             if (event.key !== "Enter") return;
             // Enter no puede enviar el formulario completo desde aquí: la guía
             // todavía no tiene ni trabajador ni prendas.
             event.preventDefault();
+            const highlighted = showSuggestions ? suggestions[highlightedIndex] : undefined;
+            if (highlighted) {
+              selectSuggestion(highlighted);
+              return;
+            }
             void lookup();
           }}
         />
@@ -126,6 +193,40 @@ export function WeighInLookup({
           {findWeighIn.isPending && <Loader2 className="size-4 animate-spin" />}
           Buscar
         </Button>
+
+        {showSuggestions && (
+          <div
+            id="weigh-in-suggestions"
+            role="listbox"
+            className="absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-lg border bg-popover shadow-md ring-1 ring-foreground/10"
+          >
+            <p className="border-b px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              Pendientes de digitalizar
+            </p>
+            {suggestions.map((ticket, index) => (
+              <button
+                key={ticket.id}
+                id={`weigh-in-suggestion-${index}`}
+                role="option"
+                aria-selected={index === highlightedIndex}
+                type="button"
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm",
+                  index === highlightedIndex ? "bg-accent" : "hover:bg-accent",
+                )}
+                // preventDefault en mousedown evita que el input pierda el foco
+                // antes de que el click alcance a dispararse.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectSuggestion(ticket)}
+              >
+                <span className="font-mono font-semibold">{ticket.reference}</span>
+                <span className="text-xs text-muted-foreground">
+                  {ticket.company_name} · {ticket.garment_count} pz · {ticket.weight_kg} kg
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {error ? (

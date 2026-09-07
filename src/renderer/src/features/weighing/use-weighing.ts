@@ -10,7 +10,12 @@ type WeighInIn = components["schemas"]["WeighInIn"];
 export const weighingKeys = {
   all: ["weighing"] as const,
   shift: ["weighing", "shift"] as const,
+  pending: ["weighing", "pending"] as const,
 };
+
+// Techo de sugerencias al tipear el ref: completa lo que ya se está
+// escribiendo, no reemplaza la búsqueda exacta por ref completo.
+export const PENDING_SUGGESTIONS_LIMIT = 30;
 
 // Cuántos pesajes del turno se muestran en la báscula. Es una lista para
 // corregir lo recién hecho, no un historial: más allá de la última decena, lo
@@ -81,6 +86,28 @@ export function usePrintWeighLabels() {
       if (!result.ok) throw new Error(result.detail);
       return data;
     },
+  });
+}
+
+/**
+ * Pesajes pendientes de digitalizar, para sugerir mientras se tipea el ref.
+ *
+ * Sin `mine`: quien digitaliza no es necesariamente quien pesó el morral, así
+ * que la lista cubre a todo el turno y no solo lo que pesó este operador.
+ * Se refresca sola cada 30s porque es una cola operativa: si no se toca la
+ * pantalla, igual va a cambiar por lo que pesan otras básculas.
+ */
+export function usePendingWeighIns() {
+  return useQuery({
+    queryKey: weighingKeys.pending,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/weighing/", {
+        params: { query: { status: "PENDIENTE", limit: PENDING_SUGGESTIONS_LIMIT } },
+      });
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30_000,
   });
 }
 
