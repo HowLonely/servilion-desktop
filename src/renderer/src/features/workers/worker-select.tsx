@@ -58,6 +58,7 @@ export function WorkerSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label="Selecciona un trabajador"
           className={cn("w-full justify-between font-normal", triggerClassName)}
         >
           {selected ? `${selected.full_name} (${selected.badge_code})` : "Selecciona un trabajador"}
