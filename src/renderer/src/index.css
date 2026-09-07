@@ -140,6 +140,10 @@
   }
   html {
     @apply font-sans;
+    /* La terminal la opera sobre todo gente mayor: la base sube de los 16px
+       por defecto a 18px para que todo el texto (dimensionado en rem) sea
+       más legible sin tocar componente por componente. */
+    font-size: 18px;
   }
   h1,
   h2,
@@ -191,9 +195,10 @@
    ------------------------------------------------------------------------- */
 @layer base {
   html[data-touch="true"] {
-    /* Sube la escala tipográfica base: todo lo dimensionado en rem crece con
-       ella sin tener que duplicar clases por pantalla. */
-    font-size: 18px;
+    /* Sube la escala tipográfica base por encima de los 18px generales:
+       la báscula se opera de pie y a un brazo de distancia, así que
+       necesita más que la legibilidad de escritorio ya elevada por defecto. */
+    font-size: 20px;
   }
 
   html[data-touch="true"] button,
