@@ -12,7 +12,6 @@ import { parseApiError } from "@/lib/api/errors";
 import { useSession } from "@/lib/auth/session-provider";
 import { RESOLUTION_TYPE_LABELS } from "@/features/orders/lib/status";
 import {
-  useDispatchOrder,
   useFinishPacking,
   usePackingProgress,
   usePrintReceipt,
@@ -46,11 +45,15 @@ type PackingItemProgressOut = components["schemas"]["PackingItemProgressOut"];
 //   vuelvan, como siempre.
 //
 // Este panel NO pistolea: el escáner único de la estación
-// (`POST /api/orders/scan/packing`) cubre las prendas, el cierre y el despacho,
-// y dos cajas de escaneo en la misma pantalla se roban el foco entre sí porque
-// el lector escribe donde esté puesto. Acá queda lo que se mira y lo que se
-// declara a mano: el progreso, la prenda que hubo que comprar, los botones de
-// respaldo para cuando la pistola falla, y la boleta.
+// (`POST /api/orders/scan/packing`) cubre las prendas y el cierre, y dos cajas
+// de escaneo en la misma pantalla se roban el foco entre sí porque el lector
+// escribe donde esté puesto. Acá queda lo que se mira y lo que se declara a
+// mano: el progreso, la prenda que hubo que comprar, los botones de respaldo
+// para cuando la pistola falla, y la boleta.
+//
+// El despacho (paso 7) ya NO vive acá: es su propio módulo, que pistolea la
+// boleta de un morral cerrado para sacarlo de planta. Este panel solo llega
+// hasta el cierre — ver features/despacho.
 //
 // Es la diferencia con el panel web, donde el mismo componente sí lleva su
 // escáner porque además vive en el detalle de la OT, sin estación alrededor.
@@ -83,16 +86,17 @@ export function PackingPanel({ order }: { order: LaundryOrderOut }) {
     ) ||
     (isDispatched && (hasOpenMissing || pendingShipment.length > 0));
   // Cerrado, esperando el pistoleo que lo saca de planta. Es lo que separa
-  // "listo en el andén" de "ya viajando".
+  // "listo en el andén" de "ya viajando". Ya no se despacha desde este panel
+  // (ver features/despacho), así que acá solo importa para dejar de mostrar
+  // el botón de cierre y seguir mostrando la boleta reimprimible.
   const isClosed = order.status === "COMPLETADA" || isIncomplete;
-  const canDispatch = isClosed || (isDispatched && pendingShipment.length > 0);
+  const isAwaitingDispatch = isClosed || (isDispatched && pendingShipment.length > 0);
 
   const { data: progress, isLoading } = usePackingProgress(
     order.id,
     canPack && isPackingStage,
   );
   const finish = useFinishPacking(order.id);
-  const dispatch = useDispatchOrder(order.id);
 
   if (!canPack || !isPackingStage) return null;
 
@@ -165,53 +169,22 @@ export function PackingPanel({ order }: { order: LaundryOrderOut }) {
         </div>
       )}
 
-      {canDispatch ? (
-        <>
-          <Button
-            size="lg"
-            className="h-12 w-full text-lg sm:w-auto sm:self-start sm:px-8"
-            disabled={dispatch.isPending}
-            onClick={async () => {
-              try {
-                await dispatch.mutateAsync({ note: "" });
-                toast[isIncomplete ? "warning" : "success"](
-                  isDispatched
-                    ? "Prenda despachada a faena en envío aparte."
-                    : isIncomplete
-                      ? "Morral despachado a faena con prendas faltantes pendientes."
-                      : "Morral despachado a faena.",
-                );
-              } catch (error) {
-                toast.error(parseApiError(error).detail);
-              }
-            }}
-          >
-            {isDispatched ? "Despachar prenda a faena" : "Despachar a faena"}
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            {isDispatched ? (
-              <>
-                El morral ya viajó sin{" "}
-                {pendingShipment.length === 1 ? "esta prenda" : "estas prendas"}
-                . Al despacharla sale en su propio envío, que se registra en
-                faena como una llegada aparte.
-              </>
-            ) : (
-              <>
-                El morral está cerrado y sigue en planta. Al despacharlo la OT
-                pasa a <strong>Despachada</strong> y recién ahí se puede
-                registrar su llegada a faena.
-                {isIncomplete && (
-                  <>
-                    {" "}
-                    Sale con la prenda faltante anotada; si aparece después, se
-                    resuelve pistoleándola y viaja en un segundo envío.
-                  </>
-                )}
-              </>
-            )}
-          </p>
-        </>
+      {isAwaitingDispatch ? (
+        <p className="text-sm text-muted-foreground">
+          {isDispatched ? (
+            <>
+              El morral ya viajó sin{" "}
+              {pendingShipment.length === 1 ? "esta prenda" : "estas prendas"}.
+              Envíala desde el módulo <strong>Despacho</strong>, pistoleando
+              esta misma boleta.
+            </>
+          ) : (
+            <>
+              El morral está cerrado y sigue en planta. Despáchalo desde el
+              módulo <strong>Despacho</strong>, pistoleando esta boleta.
+            </>
+          )}
+        </p>
       ) : (
         <>
           <Button

@@ -116,11 +116,12 @@ export function useUpdateOrderStatus(orderId: number) {
  * Pistoleo único de la mesa de empaque (FLUJO_NEGOCIO.md §4, paso 6).
  *
  * Un solo endpoint para los dos códigos que hay sobre la mesa: la boleta del
- * morral lo abre, el segundo disparo lo cierra y el tercero lo despacha; la
- * etiqueta lavable de una prenda lo abre (si hacía falta) y marca la prenda en
- * el mismo gesto. El backend deduce qué toca según el estado de la guía, así
- * que el operador nunca elige modo en pantalla — que es justamente lo que la
- * terminal tiene que preservar, porque aquí no hay mouse.
+ * morral la abre y, pistoleada de nuevo, la cierra; la etiqueta lavable de una
+ * prenda lo abre (si hacía falta) y marca la prenda en el mismo gesto. El
+ * backend deduce qué toca según el estado de la guía, así que el operador
+ * nunca elige modo en pantalla — que es justamente lo que la terminal tiene
+ * que preservar, porque aquí no hay mouse. El despacho (paso 7) es un módulo
+ * aparte, ver `useDispatchOrder`.
  */
 export function usePackingCodeScan() {
   const queryClient = useQueryClient();
@@ -201,6 +202,28 @@ export function useFinishPacking(orderId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ordersKeys.all });
+    },
+  });
+}
+
+/**
+ * Pistoleo único del módulo Despacho (FLUJO_NEGOCIO.md §4, paso 7).
+ *
+ * Espejo de `usePackingCodeScan`, pero de un solo paso: acá no hay nada que
+ * abrir ni cerrar, así que un solo disparo resuelve la boleta y despacha. El
+ * 409 (`isAmbiguousReference`) se maneja igual que en empaque.
+ */
+export function useDispatchScan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { code: string; note: string }) => {
+      const { data, error } = await api.POST("/api/orders/scan/dispatch", { body });
+      if (error) throw parseApiError(error);
+      return data as LaundryOrderOut;
+    },
+    onSuccess: (order) => {
+      queryClient.invalidateQueries({ queryKey: ordersKeys.detail(order.id) });
+      queryClient.invalidateQueries({ queryKey: ["orders", "list"] });
     },
   });
 }

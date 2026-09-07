@@ -556,6 +556,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/orders/scan/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan Dispatch Code
+         * @description Pistoleo único del módulo Despacho (paso 7).
+         *
+         *     Un solo disparo resuelve la boleta y despacha: a diferencia de
+         *     `/scan/packing`, acá no hay nada que abrir ni cerrar.
+         */
+        post: operations["orders_api_scan_dispatch_code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/orders/scan/{code}": {
         parameters: {
             query?: never;
@@ -814,9 +837,8 @@ export interface paths {
          * Dispatch Order
          * @description Despacha a faena un morral ya cerrado (paso 7).
          *
-         *     La vía normal es el tercer pistoleo de la boleta en la mesa de empaque
-         *     (`/scan/packing`); este endpoint es el equivalente por id para el panel,
-         *     igual que `/packing/finish` lo es del segundo disparo.
+         *     Es el único disparador del despacho: vive en su propio módulo Despacho,
+         *     separado de la mesa de empaque (`/scan/packing`), que solo abre y cierra.
          */
         post: operations["orders_api_dispatch_order"];
         delete?: never;
@@ -930,11 +952,11 @@ export interface paths {
         put?: never;
         /**
          * Confirm Delivery
-         * @description Registra la entrega del morral tras escanear la OT y el QR de la puerta.
+         * @description Sincroniza una entrega móvil con ubicación obligatoria.
          *
-         *     409 significa que la puerta escaneada no es el destino de la guía: la app
-         *     debe mostrar ambas habitaciones y reenviar con `confirm_different_room` si
-         *     el operador confirma que el trabajador se mudó.
+         *     Flujo 1 exige el QR de la puerta. Un 409 indica que no coincide con el
+         *     destino y requiere una segunda confirmación. Flujo 2 omite la puerta y
+         *     registra que el morral fue entregado al cliente.
          */
         post: operations["orders_delivery_api_confirm_delivery"];
         delete?: never;
@@ -2157,6 +2179,19 @@ export interface components {
              */
             quantity: number;
         };
+        /**
+         * DispatchScanIn
+         * @description Pistoleo único del módulo Despacho: resuelve la boleta y despacha directo.
+         */
+        DispatchScanIn: {
+            /** Code */
+            code: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /** SiteCountersOut */
         SiteCountersOut: {
             /** Dispatched */
@@ -2490,11 +2525,24 @@ export interface components {
         };
         /** DeliveryConfirmOut */
         DeliveryConfirmOut: {
+            /**
+             * Client Uuid
+             * Format: uuid
+             */
+            client_uuid: string;
             order: components["schemas"]["LaundryOrderOut"];
-            scanned_room: components["schemas"]["DeliveryRoomOut"];
+            /** Delivery Target */
+            delivery_target: string;
+            scanned_room: components["schemas"]["DeliveryRoomOut"] | null;
             expected_room: components["schemas"]["DeliveryRoomOut"] | null;
             /** Room Matched */
-            room_matched: boolean;
+            room_matched: boolean | null;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Accuracy Meters */
+            accuracy_meters: number;
             /**
              * Delivered At
              * Format: date-time
@@ -2527,20 +2575,28 @@ export interface components {
         };
         /**
          * DeliveryConfirmIn
-         * @description Payload del doble escaneo que hace la app al dejar el morral.
+         * @description Payload que la app guarda offline al entregar el morral.
          *
          *     `order_code` es lo que va impreso en la etiqueta/boleta (n° de OT, `ref` o
-         *     código de control, indistintamente). `room_qr` es el UUID pegado en la
-         *     puerta.
+         *     código de control, indistintamente). `room_qr` es obligatorio en Flujo 1 y
+         *     se omite en Flujo 2, donde la entrega es directamente al cliente.
          */
         DeliveryConfirmIn: {
-            /** Order Code */
-            order_code: string;
             /**
-             * Room Qr
+             * Client Uuid
              * Format: uuid
              */
-            room_qr: string;
+            client_uuid: string;
+            /** Order Code */
+            order_code: string;
+            /** Room Qr */
+            room_qr?: string | null;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Accuracy Meters */
+            accuracy_meters: number;
             /**
              * Note
              * @default
@@ -4248,6 +4304,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PackingScanOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AmbiguousReferenceOut"];
+                };
+            };
+        };
+    };
+    orders_api_scan_dispatch_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DispatchScanIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LaundryOrderOut"];
                 };
             };
             /** @description Bad Request */

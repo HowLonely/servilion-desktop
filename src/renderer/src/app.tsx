@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 
 import { Toaster } from "@/components/ui/sonner";
 import { LoginScreen } from "@/features/auth/login-screen";
+import { DispatchStation } from "@/features/dispatch/dispatch-station";
 import { DigitizeStation } from "@/features/digitize/digitize-station";
 import { HistoryStation } from "@/features/history/history-station";
 import { HospitalityStation } from "@/features/hospitality/hospitality-station";
@@ -34,7 +35,7 @@ export function App() {
 }
 
 /**
- * Ruteo de la terminal. Nueve pantallas y ninguna URL: un kiosco no navega, así
+ * Ruteo de la terminal. Diez pantallas y ninguna URL: un kiosco no navega, así
  * que un router completo sería peso muerto.
  */
 function AppRouter() {
@@ -132,6 +133,7 @@ function Screens({
   if (station === "weighing") return <WeighingStation {...shellProps} />;
   if (station === "digitize") return <DigitizeStation {...shellProps} />;
   if (station === "packing") return <PackingStation {...shellProps} />;
+  if (station === "dispatch") return <DispatchStation {...shellProps} />;
   if (station === "hospitality") return <HospitalityStation {...shellProps} />;
   return <HistoryStation {...shellProps} />;
 }
