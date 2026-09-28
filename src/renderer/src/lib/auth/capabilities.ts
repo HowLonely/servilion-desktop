@@ -3,55 +3,27 @@ import type { SessionUser } from "@shared/types";
 /**
  * Qué puede hacer un usuario en esta terminal.
  *
- * La fuente de verdad es el backend. Estos son los roles que `orders/api.py`
- * exige de verdad (`authentication/permissions.py:user_has_role` deja pasar
- * siempre a ADMIN):
+ * La fuente de verdad es el backend: cada rol lleva una lista de permisos que
+ * se edita en Configuración → Roles, y `/api/auth/me` devuelve los del usuario
+ * (`user.permissions`). Aquí solo se traducen a estaciones. Los códigos son los
+ * de `authentication/permissions.py::Perm`; el panel web usa los mismos.
  *
- *   POST /api/weighing/                      → PESAJE, SUPERVISOR
- *   POST /api/weighing/{id}/void             → PESAJE, SUPERVISOR
- *   POST /api/orders/                        → DIGITADOR_OT, SUPERVISOR
- *   POST /api/orders/{id}/packing/scan       → DIGITADOR_EMPAQUE, SUPERVISOR
- *   POST /api/orders/{id}/packing/finish     → DIGITADOR_EMPAQUE, SUPERVISOR
- *   POST /api/orders/{id}/dispatch           → DIGITADOR_EMPAQUE, SUPERVISOR
- *   POST /api/orders/{id}/incomplete/resolve → DIGITADOR_EMPAQUE, SUPERVISOR
- *   POST /api/hospitality/dispatches         → DIGITADOR_EMPAQUE
- *   GET  /api/hospitality/balances           → cualquier usuario autenticado
- *
- * El equivalente en el panel web es `components/layout/nav-config.ts`. Son dos
- * repositorios distintos, así que la matriz está duplicada a propósito: si
- * cambian los permisos del backend, hay que tocar los dos archivos.
+ * Ocultar un botón no es la defensa: el backend exige el mismo permiso en el
+ * endpoint. Esto solo evita ofrecer algo que va a responder 403.
  */
-export const WEIGHING_ROLES = ["ADMIN", "SUPERVISOR", "PESAJE"] as const;
-export const DIGITIZE_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_OT"] as const;
-export const PACKING_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
-// Mismos roles que empaque: el backend exige lo mismo para /dispatch que para
-// /scan/packing, aunque viven en módulos distintos de esta terminal.
-export const DISPATCH_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
-
-// Hotelería es un stock rotativo: de la planta solo sale el despacho de lencería
-// limpia hacia la faena, y lo hace el mismo puesto que despacha los morrales.
-// El reparto y el retiro ocurren en faena (app móvil) y el conteo de inventario
-// es del administrador en la web. El supervisor entra solo a consultar saldos.
-export const LINEN_DISPATCH_ROLES = ["ADMIN", "DIGITADOR_EMPAQUE"] as const;
-export const LINEN_VIEW_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
-
-// Consulta de histórico: guías y trabajadores. DIGITADOR_EMPAQUE y PESAJE
-// quedan fuera a propósito — su trabajo empieza y termina en el morral que
-// tienen al frente, no en navegar el histórico completo de la operación.
-export const HISTORY_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_OT"] as const;
-
-// Crear, editar y desactivar trabajadores es catálogo, y el catálogo es lo
-// único que separa a ADMIN de SUPERVISOR en todo el sistema (ver USUARIOS.md
-// §2). Los demás roles de HISTORY_ROLES solo consultan.
-export const WORKER_MANAGE_ROLES = ["ADMIN"] as const;
-
-export const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Administrador",
-  SUPERVISOR: "Supervisor",
-  PESAJE: "Pesaje",
-  DIGITADOR_OT: "Digitador de OT",
-  DIGITADOR_EMPAQUE: "Digitador de Empaque",
-};
+export const PERM = {
+  weighing: "weighing.operate",
+  digitize: "orders.digitize",
+  pack: "orders.pack",
+  dispatch: "orders.dispatch",
+  linenDispatch: "hospitality.dispatch",
+  linenView: "hospitality.view",
+  history: "history.view",
+  catalog: "catalog.manage",
+  workers: "workers.manage",
+  users: "users.manage",
+  sync: "sync.manage",
+} as const;
 
 /**
  * Las estaciones de trabajo que ofrece la app de escritorio.
@@ -61,11 +33,13 @@ export const ROLE_LABELS: Record<string, string> = {
  * OT física al sistema, y el empaque valida el morral limpio antes de
  * despacharlo.
  *
- * `hospitality` va aparte y al final porque es OTRO servicio, no otra pantalla
- * del mismo: lo que entra es lencería a granel del campamento —sin trabajador,
- * sin habitación y sin entrega individual— y separarla evita que alguien
- * registre sábanas como si fueran la ropa de una persona, que es exactamente lo
- * que hacía el sistema antiguo.
+ * `hospitality` va aparte porque es OTRO servicio, no otra pantalla del mismo:
+ * lo que entra es lencería a granel del campamento —sin trabajador, sin
+ * habitación y sin entrega individual—.
+ *
+ * `admin` (Configuración) no es un puesto de planta: es donde se administran
+ * usuarios, roles y catálogo sin depender de internet, porque la terminal
+ * trabaja contra el servidor local.
  */
 export type Station =
   | "weighing"
@@ -73,7 +47,8 @@ export type Station =
   | "packing"
   | "dispatch"
   | "hospitality"
-  | "history";
+  | "history"
+  | "admin";
 
 export const STATION_LABELS: Record<Station, string> = {
   weighing: "Pesaje y etiquetado",
@@ -82,6 +57,7 @@ export const STATION_LABELS: Record<Station, string> = {
   dispatch: "Despacho",
   hospitality: "Lencería de hotelería",
   history: "Consultar histórico",
+  admin: "Configuración",
 };
 
 export type Capabilities = {
@@ -98,44 +74,54 @@ export type Capabilities = {
   canViewHistory: boolean;
   /** Crear, editar y desactivar trabajadores. Sin esto, solo se consulta. */
   canManageWorkers: boolean;
+  /** Clientes, empresas, prendas, precios, faenas, campamentos y habitaciones. */
+  canManageCatalog: boolean;
+  /** Usuarios y roles. */
+  canManageUsers: boolean;
+  /** Estado e incidencias de la sincronización con la nube. */
+  canManageSync: boolean;
   /** Estaciones disponibles, en el orden en que se muestran en el menú. */
   stations: Station[];
 };
 
-export function capabilitiesOf(user: SessionUser | null): Capabilities {
-  const role = user?.role ?? "";
-  const canWeigh = (WEIGHING_ROLES as readonly string[]).includes(role);
-  const canDigitize = (DIGITIZE_ROLES as readonly string[]).includes(role);
-  const canPack = (PACKING_ROLES as readonly string[]).includes(role);
-  const canDispatch = (DISPATCH_ROLES as readonly string[]).includes(role);
-  const canDispatchLinen = (LINEN_DISPATCH_ROLES as readonly string[]).includes(role);
-  const canViewLinen = (LINEN_VIEW_ROLES as readonly string[]).includes(role);
-  const canViewHistory = (HISTORY_ROLES as readonly string[]).includes(role);
-  const canManageWorkers = (WORKER_MANAGE_ROLES as readonly string[]).includes(role);
-
-  const stations: Station[] = [];
-  if (canWeigh) stations.push("weighing");
-  if (canDigitize) stations.push("digitize");
-  if (canPack) stations.push("packing");
-  if (canDispatch) stations.push("dispatch");
-  if (canViewLinen) stations.push("hospitality");
-  if (canViewHistory) stations.push("history");
-
-  return {
-    canWeigh,
-    canDigitize,
-    canPack,
-    canDispatch,
-    canDispatchLinen,
-    canViewLinen,
-    canViewHistory,
-    canManageWorkers,
-    stations,
-  };
+export function hasPermission(user: SessionUser | null, permission: string): boolean {
+  return user?.permissions?.includes(permission) ?? false;
 }
 
-export function roleLabel(role: string): string {
-  return ROLE_LABELS[role] ?? role;
+export function capabilitiesOf(user: SessionUser | null): Capabilities {
+  const can = (permission: string): boolean => hasPermission(user, permission);
+
+  const capabilities = {
+    canWeigh: can(PERM.weighing),
+    canDigitize: can(PERM.digitize),
+    canPack: can(PERM.pack),
+    canDispatch: can(PERM.dispatch),
+    canDispatchLinen: can(PERM.linenDispatch),
+    canViewLinen: can(PERM.linenView) || can(PERM.linenDispatch),
+    canViewHistory: can(PERM.history) || can(PERM.workers),
+    canManageWorkers: can(PERM.workers),
+    canManageCatalog: can(PERM.catalog),
+    canManageUsers: can(PERM.users),
+    canManageSync: can(PERM.sync),
+  };
+
+  const stations: Station[] = [];
+  if (capabilities.canWeigh) stations.push("weighing");
+  if (capabilities.canDigitize) stations.push("digitize");
+  if (capabilities.canPack) stations.push("packing");
+  if (capabilities.canDispatch) stations.push("dispatch");
+  if (capabilities.canViewLinen) stations.push("hospitality");
+  if (capabilities.canViewHistory) stations.push("history");
+  if (capabilities.canManageUsers || capabilities.canManageCatalog || capabilities.canManageSync) {
+    stations.push("admin");
+  }
+
+  return { ...capabilities, stations };
+}
+
+/** Nombre visible del rol del usuario. */
+export function roleLabel(user: SessionUser): string {
+  return user.role_name || user.role;
 }
 
 export function fullName(user: SessionUser): string {

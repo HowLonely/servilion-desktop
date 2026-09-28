@@ -46,6 +46,8 @@ export function OrdersHistoryPanel() {
   });
 
   const orders = page?.items ?? [];
+  // Solo es incompleto si el rango se sale de la ventana del servidor local.
+  const maybeIncomplete = page?.source === "local";
   const total = page?.count ?? 0;
   const from = total === 0 ? 0 : offset + 1;
   const to = Math.min(offset + ORDERS_PAGE_SIZE, total);
@@ -106,6 +108,13 @@ export function OrdersHistoryPanel() {
           />
         </div>
       </div>
+
+      {maybeIncomplete && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Sin internet solo se ven las guías de los últimos 90 días. Las anteriores aparecerán cuando vuelva la
+          conexión.
+        </p>
+      )}
 
       {isLoading && <Skeleton className="h-64 w-full" />}
 

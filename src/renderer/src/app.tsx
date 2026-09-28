@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { Toaster } from "@/components/ui/sonner";
+import { UpdateNotifier } from "@/components/update-notifier";
+import { AdminStation } from "@/features/admin/admin-station";
 import { LoginScreen } from "@/features/auth/login-screen";
 import { DispatchStation } from "@/features/dispatch/dispatch-station";
 import { DigitizeStation } from "@/features/digitize/digitize-station";
@@ -30,6 +32,7 @@ export function App() {
         <AppRouter />
       </SessionProvider>
       <Toaster />
+      <UpdateNotifier />
     </QueryClientProvider>
   );
 }
@@ -135,6 +138,7 @@ function Screens({
   if (station === "packing") return <PackingStation {...shellProps} />;
   if (station === "dispatch") return <DispatchStation {...shellProps} />;
   if (station === "hospitality") return <HospitalityStation {...shellProps} />;
+  if (station === "admin") return <AdminStation {...shellProps} />;
   return <HistoryStation {...shellProps} />;
 }
 

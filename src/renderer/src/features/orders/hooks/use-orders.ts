@@ -40,11 +40,14 @@ export function useOrders(filters: OrderFilters) {
   return useQuery({
     queryKey: ordersKeys.list(filters),
     queryFn: async () => {
-      const { data, error } = await api.GET("/api/orders/", {
+      const { data, error, response } = await api.GET("/api/orders/", {
         params: { query: { limit: ORDERS_PAGE_SIZE, ...filters } },
       });
       if (error) throw error;
-      return data;
+      // El servidor local guarda una ventana reciente de guías; lo anterior lo
+      // pide a la nube. Sin internet responde lo que tiene y lo marca con
+      // "local", para que el histórico avise que puede faltar algo.
+      return { ...data, source: response.headers.get("x-servilion-source") };
     },
     placeholderData: (previous) => previous,
   });

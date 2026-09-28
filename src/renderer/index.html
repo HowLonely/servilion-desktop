@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Terminal sin acceso a internet: todo el contenido viaja por el puente
-         IPC, así que se prohíbe cargar cualquier recurso remoto. -->
+         IPC, así que se prohíbe cargar cualquier recurso remoto. `blob:` en
+         img-src es la foto de la OT recién tomada con la cámara, que vive en
+         memoria del propio renderer hasta que main la sube a S3. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self'"
     />
     <title>Servilion · Digitalización</title>
   </head>

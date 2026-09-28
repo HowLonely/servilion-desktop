@@ -35,7 +35,7 @@ npm install
 npm run dev
 ```
 
-Por defecto apunta a `http://localhost:8000`. Para cambiarlo sin recompilar, usa **Ajustes del equipo** dentro de la app (el engranaje, disponible incluso sin haber iniciado sesión).
+Por defecto apunta a `http://localhost:8000`. El backend de desarrollo corre en modo "nube", que rechaza pesaje, digitalización, empaque y despachos; para probarlos contra él, agrega `ALLOW_PLANT_OPERATIONS=1` a `servilion-backend/.env` (o levanta un servidor local con `servilion-local`). Para cambiarlo sin recompilar, usa **Ajustes del equipo** dentro de la app (el engranaje, disponible incluso sin haber iniciado sesión).
 
 ### Comandos
 
@@ -71,12 +71,25 @@ El login trae marcada la opción **"Mantener la sesión iniciada en este equipo"
 
 Para que la terminal arranque sola con Windows, activa **"Iniciar al encender el equipo"** en Ajustes (usa `app.setLoginItemSettings`, que sobrevive a las actualizaciones de la app, a diferencia de un acceso directo en la carpeta de Inicio).
 
-### Qué estación ve cada rol
+### Qué estación ve cada usuario
 
-Se deriva del rol del usuario, respetando **lo que el backend exige de verdad** (`orders/api.py`; ADMIN atraviesa toda restricción):
+Los roles ya no son fijos: cada rol es una lista de **permisos** que se edita en **Configuración → Roles** (en esta terminal o en el panel web). `/api/auth/me` devuelve los permisos del usuario y la terminal ofrece las estaciones que corresponden (`lib/auth/capabilities.ts`):
 
-| Rol | Pesaje | Digitalizar | Empaque | Hotelería | Histórico | Al abrir la app |
-|---|:---:|:---:|:---:|:---:|:---:|---|
+| Permiso | Estación |
+|---|---|
+| `weighing.operate` | Pesaje y etiquetado |
+| `orders.digitize` | Digitalizar OT |
+| `orders.pack` | Empaque y revisión |
+| `orders.dispatch` | Despacho |
+| `hospitality.dispatch` / `hospitality.view` | Lencería de hotelería (despachar / solo saldos) |
+| `history.view` | Consultar histórico |
+| `users.manage`, `catalog.manage`, `workers.manage`, `sync.manage` | Configuración (usuarios y roles, catálogo, trabajadores, sincronización) |
+
+El rol Administrador tiene siempre todos los permisos. Con una sola estación disponible se entra directo; con varias aparece el menú, elegible con las teclas numéricas o tocando la tarjeta.
+
+Ocultar un botón no es la defensa: el backend exige el mismo permiso en cada endpoint. Los códigos son los de `servilion-backend/authentication/permissions.py`; el panel web usa los mismos.
+
+---|:---:|:---:|:---:|:---:|:---:|---|
 | ADMIN | ✅ | ✅ | ✅ | ✅ despachar | ✅ + edita | Menú de selección |
 | SUPERVISOR | ✅ | ✅ | ✅ | ✅ saldos | ✅ consulta | Menú de selección |
 | PESAJE | ✅ | ❌ | ❌ | ❌ | ❌ | Entra directo a Pesaje |
@@ -214,13 +227,27 @@ Lo que **no** está acá y sigue siendo del panel web: clientes, empresas, prend
 
 ---
 
-## 🌐 Conectividad
+## 🌐 Conectividad: el servidor local de planta
 
-La app **requiere red**. No hay cola offline: lo que hay es que el problema se vea a tiempo.
+Las terminales **no apuntan a la nube**: apuntan al servidor local de la planta (`servilion-local`, en Ajustes → Servidor: `http://<IP-del-servidor>:8000`). Todo se guarda ahí primero y el servidor lo envía a `api.servilion.cl` en segundos cuando hay internet. Sin internet la planta trabaja igual: los cambios esperan en el servidor local y salen solos al volver la conexión. La nube rechaza (409) pesaje, digitalización, empaque y despachos para que no haya dos lugares emitiendo refs.
 
-- Un indicador permanente en la cabecera muestra **Conectado / Sin conexión**, sondeando cada 15 s.
-- Los errores se muestran grandes y en castellano, nunca como error técnico.
-- Ante una caída, el trabajo digitado **no se pierde**: el formulario queda tal cual para reintentar cuando vuelva la red.
+La cabecera muestra dos indicadores:
+
+- **Conectado / Sin conexión:** si esta terminal llega a su servidor (sondeo cada 15 s). Sin servidor no se puede trabajar; el formulario digitado no se pierde.
+- **Nube al día / Enviando N / Sin internet:** si el servidor local llega a la nube. Es un aviso, no un error.
+
+El servidor local guarda los últimos 90 días de guías y pesajes (más las que siguen abiertas). En el histórico, un rango más antiguo se consulta en la nube; sin internet se muestra lo local con un aviso.
+
+## 🔄 Actualización automática
+
+La terminal se actualiza sola desde los releases del repo público `HowLonely/servilion-desktop-releases` (`electron-updater`, ver `main/updater.ts`). Para publicar una versión:
+
+```bash
+npm version patch        # sube la versión y crea el tag
+git push --follow-tags   # el workflow .github/workflows/release.yml compila y publica
+```
+
+Cada terminal revisa al arrancar y cada 4 horas, baja la versión en segundo plano y avisa con "Reiniciar ahora". Si nadie reinicia, se instala al cerrar la app o sola a las 4:00. El workflow necesita el secreto `RELEASES_TOKEN` (token de GitHub con permiso de escritura sobre el repo de releases).
 
 ---
 

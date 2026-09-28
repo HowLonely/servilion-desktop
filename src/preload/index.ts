@@ -12,6 +12,8 @@ import type {
   ServerStatus,
   SessionState,
   StationConfig,
+  StorageUploadRequest,
+  StorageUploadResult,
   WeighPrintJob,
 } from "../shared/types";
 
@@ -65,6 +67,25 @@ const servilion = {
     /** Imprime (o reimprime) la guía de despacho de lencería de hotelería. */
     linenDispatch: (job: LinenDispatchPrintJob): Promise<PrintResult> =>
       ipcRenderer.invoke("printer:linenDispatch", job),
+  },
+
+  storage: {
+    /** Sube un archivo a S3 con el POST prefirmado que entregó el backend. */
+    upload: (request: StorageUploadRequest): Promise<StorageUploadResult> =>
+      ipcRenderer.invoke("storage:upload", request),
+  },
+
+  updates: {
+    /** Versión nueva ya descargada, o null. */
+    pending: (): Promise<string | null> => ipcRenderer.invoke("update:pending"),
+    /** Avisa cuando termina de bajar una versión nueva. */
+    onReady: (listener: (version: string) => void): (() => void) => {
+      const handler = (_event: unknown, version: string): void => listener(version);
+      ipcRenderer.on("update:ready", handler);
+      return () => ipcRenderer.removeListener("update:ready", handler);
+    },
+    /** Cierra la app, instala la versión nueva y la vuelve a abrir. */
+    install: (): Promise<void> => ipcRenderer.invoke("update:install"),
   },
 
   app: {

@@ -32,7 +32,22 @@ export type StationConfig = {
    * la estación que solo tiene una impresora.
    */
   receiptPrinter: PrinterConfig;
+  /**
+   * Cámara con la que se fotografía la OT física al digitalizarla (una cámara
+   * de documentos USB tipo JETION). Es el `deviceId` de Chromium; vacío = la
+   * que se detecte primero. Es del equipo por lo mismo que las impresoras: lo
+   * que está enchufado es el PC, no el usuario.
+   */
+  cameraDeviceId: string;
+  /**
+   * Giro, en grados horarios, que se aplica a la imagen de esa cámara. Depende
+   * de cómo quedó montado el brazo sobre el mesón, así que se fija una vez por
+   * equipo y no en cada foto.
+   */
+  cameraRotation: CameraRotation;
 };
+
+export type CameraRotation = 0 | 90 | 180 | 270;
 
 /**
  * Lenguaje de comandos de la impresora. No hay uno solo: hay uno por familia de
@@ -178,6 +193,22 @@ export type LinenDispatchPrintJob = {
 
 export type PrintResult = { ok: true } | { ok: false; detail: string };
 
+/**
+ * Subida directa a S3 con el POST prefirmado que entrega el backend
+ * (`PresignedUploadOut`). La hace main y no el renderer: el bucket no tiene por
+ * qué aceptar CORS desde la app, y la CSP de la terminal prohíbe conectarse a
+ * cualquier origen remoto.
+ */
+export type StorageUploadRequest = {
+  uploadUrl: string;
+  fields: Record<string, string>;
+  filename: string;
+  contentType: string;
+  data: Uint8Array;
+};
+
+export type StorageUploadResult = { ok: true } | { ok: false; detail: string };
+
 /** Espejo de `UserOut` del backend (authentication/schemas.py). */
 export type SessionUser = {
   id: number;
@@ -186,6 +217,10 @@ export type SessionUser = {
   last_name: string;
   email: string;
   role: string;
+  /** Nombre visible del rol (los roles se crean y editan en Configuración). */
+  role_name: string;
+  /** Permisos efectivos del rol: de aquí salen las estaciones que se ofrecen. */
+  permissions: string[];
   phone: string;
   is_active: boolean;
 };
