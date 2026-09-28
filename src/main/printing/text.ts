@@ -93,6 +93,24 @@ export function formatWeight(kg: number): string {
   return String(kg).replace(".", ",");
 }
 
+/**
+ * Encabezado del ticket maestro del pesaje. Los express lo anuncian arriba de
+ * todo porque es lo primero que se lee al sacar el ticket del morral; ocupa la
+ * misma línea y casi el mismo largo para no desbordar el adhesivo de 50 mm.
+ */
+export function masterTicketTitle(job: { service_type?: string }): string {
+  return job.service_type === "EXPRESS" ? "EXPRESS - DIGITALIZAR" : "PESAJE - DIGITALIZAR";
+}
+
+/**
+ * Encabezado de la boleta del morral limpio. Mismo criterio que el ticket
+ * maestro: "EXPRESS" reemplaza a "BOLETA" en la primera línea, que casi no
+ * cambia de largo y no desborda el ancho del rollo.
+ */
+export function receiptTitle(job: { service_type?: string }): string {
+  return job.service_type === "EXPRESS" ? "EXPRESS - MORRAL LIMPIO" : "BOLETA - MORRAL LIMPIO";
+}
+
 export function truncate(value: string, max: number): string {
   return value.length <= max ? value : `${value.slice(0, max - 1)}.`;
 }

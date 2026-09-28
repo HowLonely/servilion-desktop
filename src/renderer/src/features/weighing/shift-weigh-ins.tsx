@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ban, Loader2, Printer, X } from "lucide-react";
+import { Ban, Loader2, Printer, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -117,7 +117,15 @@ function WeighInRow({
       )}
     >
       <div className="min-w-40 flex-1">
-        <p className="font-mono text-2xl font-semibold tracking-tight">{weighIn.reference}</p>
+        <p className="flex items-center gap-2 font-mono text-2xl font-semibold tracking-tight">
+          {weighIn.reference}
+          {weighIn.service_type === "EXPRESS" && (
+            <span className="flex items-center gap-1 rounded-md bg-amber-500 px-2 py-0.5 font-sans text-xs font-semibold text-white">
+              <Zap className="size-3.5" />
+              EXPRESS
+            </span>
+          )}
+        </p>
         <p className="text-sm text-muted-foreground">
           {weighIn.company_name}
           {weighIn.is_contractor && " · Contratista"}

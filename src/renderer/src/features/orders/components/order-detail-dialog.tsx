@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/date";
 import { OrderNumberLabel } from "@/features/orders/components/order-number-label";
 import { OrderStatusBadge } from "@/features/orders/components/order-status-badge";
+import { ExpressBadge } from "@/features/orders/components/express-badge";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { useOrder } from "@/features/orders/hooks/use-orders";
 
@@ -39,6 +40,7 @@ export function OrderDetailDialog({
               <>
                 OT <OrderNumberLabel value={order.order_number} />
                 <OrderStatusBadge status={order.status} />
+                <ExpressBadge serviceType={order.service_type} />
               </>
             ) : (
               "OT"
@@ -61,6 +63,10 @@ export function OrderDetailDialog({
               <Row label="Ref" value={order.reference || "—"} mono />
               <Row label="Código de control" value={order.control_code || "—"} mono />
               <Row label="Recibida" value={formatDateTime(order.received_at)} />
+              <Row
+                label="Tipo de cargo"
+                value={order.service_type === "EXPRESS" ? "Express" : "Normal"}
+              />
               <Row
                 label="Peso del morral"
                 value={order.weight_kg != null ? `${order.weight_kg} kg` : "—"}

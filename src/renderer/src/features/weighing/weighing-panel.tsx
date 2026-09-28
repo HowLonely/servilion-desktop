@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Check, ChevronLeft, History, Loader2, Printer, Shirt, Weight } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Check, ChevronLeft, History, Loader2, Printer, Shirt, Weight, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -9,12 +9,15 @@ import { parseApiError } from "@/lib/api/errors";
 import { useActiveClients, useClientCompanies } from "@/features/weighing/use-catalog";
 import {
   useCreateWeighIn,
+  useExpressQuota,
   usePrintWeighLabels,
 } from "@/features/weighing/use-weighing";
 
 import type { components } from "@/lib/api/schema";
 
 type WeighInOut = components["schemas"]["WeighInOut"];
+type ExpressQuotaOut = components["schemas"]["ExpressQuotaOut"];
+type ServiceType = "NORMAL" | "EXPRESS";
 
 /**
  * Los cuatro pasos de un pesaje, en el orden en que ocurren físicamente: el
@@ -38,10 +41,12 @@ export function WeighingPanel({ onOpenShift }: { onOpenShift: () => void }) {
   const [count, setCount] = useState("");
   const [weight, setWeight] = useState("");
   const [created, setCreated] = useState<WeighInOut | null>(null);
+  const [submittingType, setSubmittingType] = useState<ServiceType | null>(null);
 
   const clients = useActiveClients();
   const companies = useClientCompanies(clientId);
   const createWeighIn = useCreateWeighIn();
+  const expressQuota = useExpressQuota();
   const printLabels = usePrintWeighLabels();
 
   function reset(): void {
@@ -56,15 +61,17 @@ export function WeighingPanel({ onOpenShift }: { onOpenShift: () => void }) {
     setStep(clientId ? "company" : "client");
   }
 
-  async function submit(): Promise<void> {
+  async function submit(serviceType: ServiceType): Promise<void> {
     if (clientId === null || companyId === null) return;
 
+    setSubmittingType(serviceType);
     try {
       const weighIn = await createWeighIn.mutateAsync({
         client_id: clientId,
         company_id: companyId,
         garment_count: Number(count),
         weight_kg: Number(weight),
+        service_type: serviceType,
       });
       setCreated(weighIn);
       setStep("done");
@@ -82,6 +89,12 @@ export function WeighingPanel({ onOpenShift }: { onOpenShift: () => void }) {
       }
     } catch (error) {
       toast.error(parseApiError(error).detail);
+      // Si el rechazo fue por cupo agotado, el contador en pantalla estaba
+      // atrasado respecto de otras básculas: se corrige para que el botón lo
+      // muestre sin esperar al próximo refresco.
+      if (serviceType === "EXPRESS") void expressQuota.refetch();
+    } finally {
+      setSubmittingType(null);
     }
   }
 
@@ -183,10 +196,16 @@ export function WeighingPanel({ onOpenShift }: { onOpenShift: () => void }) {
           allowDecimal
           onChange={setWeight}
           maxIntegerDigits={3}
-          canContinue={Number(weight) > 0}
-          continueLabel={createWeighIn.isPending ? "Guardando…" : "Pesar e imprimir"}
-          isBusy={createWeighIn.isPending}
-          onContinue={() => void submit()}
+          actions={
+            // Normal o express se decide al cerrar el pesaje y no en un paso
+            // aparte: sigue siendo un solo toque para terminar el morral.
+            <ServiceTypeButtons
+              canSubmit={Number(weight) > 0}
+              submittingType={submittingType}
+              quota={expressQuota.data}
+              onSubmit={(serviceType) => void submit(serviceType)}
+            />
+          }
         />
       )}
     </div>
@@ -232,7 +251,7 @@ function StepHeader({
         <div className="flex-1" />
         <Button variant="ghost" size="lg" onClick={onOpenShift} className="h-12">
           <History className="size-5" />
-          Pesajes del turno
+          Pesajes anteriores
         </Button>
       </div>
 
@@ -327,6 +346,7 @@ function NumberStep({
   canContinue,
   continueLabel = "Continuar",
   isBusy = false,
+  actions,
   onChange,
   onContinue,
 }: {
@@ -337,11 +357,13 @@ function NumberStep({
   unit: string;
   allowDecimal?: boolean;
   maxIntegerDigits: number;
-  canContinue: boolean;
+  canContinue?: boolean;
   continueLabel?: string;
   isBusy?: boolean;
+  /** Reemplaza el botón "Continuar" cuando el paso cierra con más de una salida. */
+  actions?: ReactNode;
   onChange: (value: string) => void;
-  onContinue: () => void;
+  onContinue?: () => void;
 }) {
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -361,15 +383,17 @@ function NumberStep({
           <span className="text-2xl text-muted-foreground">{unit}</span>
         </div>
 
-        <Button
-          size="lg"
-          className="h-16 text-lg"
-          disabled={!canContinue || isBusy}
-          onClick={onContinue}
-        >
-          {isBusy ? <Loader2 className="size-5 animate-spin" /> : <Check className="size-5" />}
-          {continueLabel}
-        </Button>
+        {actions ?? (
+          <Button
+            size="lg"
+            className="h-16 text-lg"
+            disabled={!canContinue || isBusy}
+            onClick={onContinue}
+          >
+            {isBusy ? <Loader2 className="size-5 animate-spin" /> : <Check className="size-5" />}
+            {continueLabel}
+          </Button>
+        )}
       </div>
 
       <NumericKeypad
@@ -378,6 +402,66 @@ function NumberStep({
         allowDecimal={allowDecimal}
         maxIntegerDigits={maxIntegerDigits}
       />
+    </div>
+  );
+}
+
+// --- Cierre: cargo normal o express ----------------------------------------
+
+/**
+ * Los dos botones que cierran el pesaje. El express muestra `usados/límite` del
+ * mes para que el operador sepa cuánto cupo queda antes de gastarlo.
+ *
+ * Con el cupo agotado el botón se deshabilita, pero es solo una ayuda: el
+ * contador puede venir hasta 30 s atrasado y el servidor rechaza igual el
+ * express sin cupo, así que la báscula nunca es la que hace cumplir el límite.
+ */
+function ServiceTypeButtons({
+  canSubmit,
+  submittingType,
+  quota,
+  onSubmit,
+}: {
+  canSubmit: boolean;
+  submittingType: ServiceType | null;
+  quota: ExpressQuotaOut | undefined;
+  onSubmit: (serviceType: ServiceType) => void;
+}) {
+  const isBusy = submittingType !== null;
+  const isExhausted = quota !== undefined && quota.remaining <= 0;
+  const counter = quota ? `${quota.used}/${quota.limit}` : "…";
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <Button
+        size="lg"
+        className="h-16 text-lg"
+        disabled={!canSubmit || isBusy}
+        onClick={() => onSubmit("NORMAL")}
+      >
+        {submittingType === "NORMAL" ? (
+          <Loader2 className="size-5 animate-spin" />
+        ) : (
+          <Check className="size-5" />
+        )}
+        Normal
+      </Button>
+      <Button
+        size="lg"
+        className="h-16 flex-col gap-0 bg-amber-500 text-lg text-white hover:bg-amber-600"
+        disabled={!canSubmit || isBusy || isExhausted}
+        onClick={() => onSubmit("EXPRESS")}
+      >
+        <span className="flex items-center gap-2 font-semibold">
+          {submittingType === "EXPRESS" ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <Zap className="size-5" />
+          )}
+          EXPRESS {counter}
+        </span>
+        {isExhausted && <span className="text-xs font-normal">Cupo del mes agotado</span>}
+      </Button>
     </div>
   );
 }
@@ -414,6 +498,12 @@ function WeighInConfirmation({
       </div>
 
       <div className="flex flex-wrap justify-center gap-2 text-base">
+        {weighIn.service_type === "EXPRESS" && (
+          <span className="flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 font-semibold text-amber-700">
+            <Zap className="size-4" />
+            EXPRESS
+          </span>
+        )}
         <Detail label={weighIn.company_name} value={weighIn.is_contractor ? "Contratista" : "Mandante"} />
         <Detail label="Prendas" value={String(weighIn.garment_count)} />
         <Detail label="Peso" value={`${weighIn.weight_kg} kg`} />

@@ -4,6 +4,8 @@ import {
   formatDate,
   formatDateTime,
   formatWeight,
+  masterTicketTitle,
+  receiptTitle,
   SEPARATOR,
   truncate,
 } from "./text";
@@ -79,7 +81,7 @@ function masterTicket(job: WeighPrintJob, printer: PrinterConfig): string {
     `^PW${width}`,
     `^LL${height}`,
     "^LH0,0",
-    `^FO${margin},${line(0)}^A0N,${dots(3, dpi)},${dots(3, dpi)}^FDPESAJE - DIGITALIZAR^FS`,
+    `^FO${margin},${line(0)}^A0N,${dots(3, dpi)},${dots(3, dpi)}^FD${masterTicketTitle(job)}^FS`,
     `^FO${margin},${line(4)}^A0N,${dots(7, dpi)},${dots(7, dpi)}^FD${asciiText(job.reference)}^FS`,
     `^FO${margin},${line(13)}^BY2,3,${dots(10, dpi)}^BCN,${dots(10, dpi)},N,N,N^FD${asciiText(job.reference)}^FS`,
     `^FO${margin},${line(25)}^A0N,${dots(3.4, dpi)},${dots(3.4, dpi)}^FD${truncate(asciiText(job.client_name), 34)}^FS`,
@@ -190,7 +192,7 @@ export function buildReceiptZpl(job: ReceiptPrintJob, printer: PrinterConfig): s
     `^LL${height}`,
     "^LH0,0",
 
-    text(0, 3, "BOLETA - MORRAL LIMPIO"),
+    text(0, 3, receiptTitle(job)),
     // El ref manda en la cabecera: es lo que identifica el morral en la mesa,
     // tanto para el operador como para lo que ya está pegado a la ropa.
     text(4, 8, asciiText(job.reference) || "S/REF"),

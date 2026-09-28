@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/date";
+import { OrderStatusBadge } from "@/features/orders/components/order-status-badge";
 
 import type { components } from "@/lib/api/schema";
 
@@ -17,7 +18,23 @@ type TimelineEntry = {
    * pesaje "pendiente": no pasó por ahí y no va a pasar.
    */
   notApplicable?: string;
+  /**
+   * Estados en que este paso dejó la guía, en orden. Se muestran como badge
+   * solo cuando el paso ya ocurrió, para que se lea qué cambió en cada nodo.
+   * Vacío en los pasos que no mueven el estado (el pesaje, la recepción del
+   * limpio en faena).
+   */
+  statuses?: string[];
 };
+
+// El cierre del empaque deja la guía Completa o Incompleta. Si cerró incompleta
+// y el faltante se resolvió después, pasó por los dos: se muestran en orden.
+function packedStatuses(order: LaundryOrderOut): string[] {
+  const statuses: string[] = [];
+  if (order.incomplete_at) statuses.push("INCOMPLETA");
+  if (order.packed_at) statuses.push("COMPLETADA");
+  return statuses;
+}
 
 /**
  * Hitos de la guía, portado de `servilion-web`. Es la misma línea de tiempo con
@@ -59,18 +76,27 @@ function milestonesOf(order: LaundryOrderOut): TimelineEntry[] {
           : undefined,
     },
     {
+      // Es el momento en que se digitaliza la OT: ahí nace la guía en el
+      // sistema y queda Recibida.
       key: "laundry",
-      label: "Recepcionado en Lavandería",
-      description: "Morral con ropa sucia recibido en planta.",
+      label: "Digitalizado",
+      description: "OT digitalizada en planta: la guía queda registrada en el sistema.",
       at: order.laundry_received_at,
       dot: "bg-blue-500",
+      statuses: ["RECIBIDA"],
     },
     {
       key: "packed",
       label: "Empaquetado",
-      description: "Morral limpio validado prenda por prenda.",
-      at: order.packed_at,
-      dot: "bg-indigo-500",
+      description:
+        order.packed_at || !order.incomplete_at
+          ? "Morral limpio validado prenda por prenda."
+          : "Morral cerrado incompleto al empacar; falta resolver el faltante.",
+      // Igual que en la web: cerrar incompleto también es haber empacado, así
+      // que el paso no queda "Pendiente" por no tener `packed_at`.
+      at: order.packed_at ?? order.incomplete_at,
+      dot: order.packed_at ? "bg-indigo-500" : "bg-amber-500",
+      statuses: packedStatuses(order),
     },
     {
       key: "dispatched",
@@ -78,6 +104,7 @@ function milestonesOf(order: LaundryOrderOut): TimelineEntry[] {
       description: "Morral cerrado, cargado y en tránsito hacia faena.",
       at: order.dispatched_at,
       dot: "bg-sky-500",
+      statuses: ["DESPACHADA"],
     },
     {
       key: "site-clean",
@@ -95,6 +122,7 @@ function milestonesOf(order: LaundryOrderOut): TimelineEntry[] {
       description: "Entrega confirmada al trabajador.",
       at: order.delivered_at,
       dot: "bg-emerald-500",
+      statuses: ["ENTREGADA"],
     });
   }
 
@@ -149,6 +177,14 @@ export function OrderTimeline({ order }: { order: LaundryOrderOut }) {
               >
                 {milestone.label}
               </span>
+              {reached && (milestone.statuses ?? []).length > 0 && (
+                <span className="flex flex-wrap items-center gap-1.5 py-0.5">
+                  <span className="text-xs text-muted-foreground">Estado:</span>
+                  {milestone.statuses!.map((status) => (
+                    <OrderStatusBadge key={status} status={status} />
+                  ))}
+                </span>
+              )}
               <span className="text-xs text-muted-foreground">
                 {skipped ? milestone.notApplicable : milestone.description}
               </span>

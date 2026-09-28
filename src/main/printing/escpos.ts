@@ -3,6 +3,8 @@ import {
   formatDate,
   formatDateTime,
   formatWeight,
+  masterTicketTitle,
+  receiptTitle,
   SEPARATOR,
   truncate,
 } from "./text";
@@ -177,7 +179,7 @@ export function buildWeighEscPos(job: WeighPrintJob, printer: PrinterConfig): st
   const master = [
     init,
     alignCenter,
-    "PESAJE - DIGITALIZAR\n",
+    `${boldOn}${masterTicketTitle(job)}\n${boldOff}`,
     `${size(3, 3)}${boldOn}${asciiText(job.reference)}\n${boldOff}${normal}`,
     code128(job.reference, 80),
     feed(1),
@@ -219,7 +221,7 @@ export function buildReceiptEscPos(job: ReceiptPrintJob, printer: PrinterConfig)
   return [
     init,
     alignCenter,
-    "BOLETA - MORRAL LIMPIO\n",
+    `${boldOn}${receiptTitle(job)}\n${boldOff}`,
     `${size(3, 3)}${boldOn}${asciiText(job.reference) || "S/REF"}\n${boldOff}${normal}`,
     code128(scanCode, 80),
     `${scanCode}\n`,
