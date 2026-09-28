@@ -4,6 +4,8 @@ import {
   formatDate,
   formatDateTime,
   formatWeight,
+  masterTicketTitle,
+  receiptTitle,
   SEPARATOR,
   truncate,
 } from "./text";
@@ -117,7 +119,7 @@ export function buildWeighEpl(job: WeighPrintJob, printer: PrinterConfig): strin
 
   const master = [
     ...open(printer, printer.labelHeightMm * 2),
-    text(margin, at(0), dots(3, dpi), "PESAJE - DIGITALIZAR"),
+    text(margin, at(0), dots(3, dpi), masterTicketTitle(job)),
     text(margin, at(4), dots(7, dpi), job.reference),
     code128(margin, at(13), dots(10, dpi), job.reference),
     text(margin, at(25), dots(3.4, dpi), truncate(asciiText(job.client_name), 34)),
@@ -163,7 +165,7 @@ export function buildReceiptEpl(job: ReceiptPrintJob, printer: PrinterConfig): s
 
   return [
     ...open(printer, footerMm + 6),
-    text(margin, at(0), dots(3, dpi), "BOLETA - MORRAL LIMPIO"),
+    text(margin, at(0), dots(3, dpi), receiptTitle(job)),
     text(margin, at(4), dots(8, dpi), asciiText(job.reference) || "S/REF"),
     code128(margin, at(14), dots(11, dpi), scanCode),
     text(margin, at(26.5), dots(2.6, dpi), `PISTOLEAR PARA CERRAR Y DESPACHAR${SEPARATOR}${scanCode}`),

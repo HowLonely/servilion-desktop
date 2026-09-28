@@ -11,6 +11,7 @@ export const weighingKeys = {
   all: ["weighing"] as const,
   shift: ["weighing", "shift"] as const,
   pending: ["weighing", "pending"] as const,
+  expressQuota: ["weighing", "express-quota"] as const,
 };
 
 // Techo de sugerencias al tipear el ref: completa lo que ya se está
@@ -33,6 +34,25 @@ export function useShiftWeighIns() {
       if (error) throw error;
       return data;
     },
+  });
+}
+
+/**
+ * Cupo express del mes para el botón `EXPRESS 10/300`.
+ *
+ * Cuelga de `weighingKeys.all`, así que pesar o anular aquí lo refresca solo.
+ * El intervalo cubre lo que consumen las otras básculas: el cupo es global. Aun
+ * así el número es orientativo; quien decide si queda cupo es el servidor.
+ */
+export function useExpressQuota() {
+  return useQuery({
+    queryKey: weighingKeys.expressQuota,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/weighing/express-quota");
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30_000,
   });
 }
 

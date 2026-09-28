@@ -414,6 +414,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/weighing/express-quota": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Express Quota
+         * @description Cargos express usados en el mes y el límite vigente (botón de la báscula).
+         */
+        get: operations["weighing_api_get_express_quota"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weighing/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["weighing_api_get_settings"];
+        /**
+         * Update Settings
+         * @description Cambia el cupo express mensual. Rige de inmediato para el mes en curso.
+         */
+        put: operations["weighing_api_update_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/weighing/pending/{reference}": {
         parameters: {
             query?: never;
@@ -1724,6 +1765,8 @@ export interface components {
             faena: string;
             /** Is Contractor */
             is_contractor: boolean;
+            /** Service Type */
+            service_type: string;
             /** Garment Count */
             garment_count: number;
             /** Weight Kg */
@@ -1777,6 +1820,45 @@ export interface components {
             garment_count: number;
             /** Weight Kg */
             weight_kg: number;
+            /**
+             * Service Type
+             * @default NORMAL
+             */
+            service_type: string;
+        };
+        /**
+         * ExpressQuotaOut
+         * @description Cupo express del mes en curso: `used`/`limit` es lo que dice el botón.
+         */
+        ExpressQuotaOut: {
+            /** Used */
+            used: number;
+            /** Limit */
+            limit: number;
+            /** Remaining */
+            remaining: number;
+            /**
+             * Period Start
+             * Format: date-time
+             */
+            period_start: string;
+        };
+        /** WeighingSettingsOut */
+        WeighingSettingsOut: {
+            /** Express Monthly Limit */
+            express_monthly_limit: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By Name */
+            updated_by_name: string;
+        };
+        /** WeighingSettingsIn */
+        WeighingSettingsIn: {
+            /** Express Monthly Limit */
+            express_monthly_limit: number;
         };
         /**
          * PrintJobOut
@@ -1798,6 +1880,8 @@ export interface components {
             faena: string;
             /** Is Contractor */
             is_contractor: boolean;
+            /** Service Type */
+            service_type: string;
             /** Garment Count */
             garment_count: number;
             /** Weight Kg */
@@ -1869,6 +1953,8 @@ export interface components {
             shift: string;
             /** Status */
             status: string;
+            /** Service Type */
+            service_type: string;
             /** Garment Count */
             garment_count: number;
             /** Weight Kg */
@@ -2394,6 +2480,8 @@ export interface components {
             faena: string;
             /** Is Contractor */
             is_contractor: boolean;
+            /** Service Type */
+            service_type: string;
             /** Worker Name */
             worker_name: string;
             /** Phone */
@@ -4096,6 +4184,79 @@ export interface operations {
             };
         };
     };
+    weighing_api_get_express_quota: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpressQuotaOut"];
+                };
+            };
+        };
+    };
+    weighing_api_get_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeighingSettingsOut"];
+                };
+            };
+        };
+    };
+    weighing_api_update_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeighingSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeighingSettingsOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
     weighing_api_find_pending_weigh_in: {
         parameters: {
             query?: never;
@@ -4216,6 +4377,7 @@ export interface operations {
                 search?: string | null;
                 date_from?: string | null;
                 date_to?: string | null;
+                service_type?: string | null;
                 limit?: number;
                 offset?: number;
             };

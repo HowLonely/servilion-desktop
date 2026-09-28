@@ -114,6 +114,8 @@ export type WeighPrintJob = {
   company_name: string;
   faena: string;
   is_contractor: boolean;
+  /** "NORMAL" o "EXPRESS": el ticket maestro anuncia los express en su encabezado. */
+  service_type: string;
   garment_count: number;
   weight_kg: number;
   weighed_at: string;
@@ -141,6 +143,8 @@ export type ReceiptPrintJob = {
   company_name: string;
   faena: string;
   is_contractor: boolean;
+  /** "NORMAL" o "EXPRESS": la boleta de un express lo anuncia en su encabezado. */
+  service_type: string;
   worker_name: string;
   phone: string;
   national_id: string;

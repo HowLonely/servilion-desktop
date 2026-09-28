@@ -12,6 +12,7 @@ import { parseApiError } from "@/lib/api/errors";
 import { useSession } from "@/lib/auth/session-provider";
 import { OrderNumberLabel } from "@/features/orders/components/order-number-label";
 import { OrderStatusBadge } from "@/features/orders/components/order-status-badge";
+import { ExpressBadge } from "@/features/orders/components/express-badge";
 import {
   isAmbiguousReference,
   useDispatchOrder,
@@ -200,6 +201,7 @@ export function DispatchStation({
                   OT <OrderNumberLabel value={lastOrder.order_number} />
                 </h2>
                 <OrderStatusBadge status={lastOrder.status} />
+                <ExpressBadge serviceType={lastOrder.service_type} className="text-sm" />
               </div>
               <p className="mt-1 text-base text-muted-foreground">
                 {lastOrder.worker_name} · {lastOrder.company_name} · Ref{" "}

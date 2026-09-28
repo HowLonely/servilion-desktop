@@ -11,6 +11,7 @@ import { CompanySelect } from "@/features/companies/company-select";
 import { OrderDetailDialog } from "@/features/orders/components/order-detail-dialog";
 import { OrderNumberLabel } from "@/features/orders/components/order-number-label";
 import { OrderStatusBadge } from "@/features/orders/components/order-status-badge";
+import { ExpressBadge } from "@/features/orders/components/express-badge";
 import { ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/features/orders/lib/status";
 import { ORDERS_PAGE_SIZE, useOrders } from "@/features/orders/hooks/use-orders";
 
@@ -132,6 +133,7 @@ export function OrdersHistoryPanel() {
                   <span className="font-mono text-sm font-normal text-muted-foreground">
                     Ref {order.reference || "—"}
                   </span>
+                  <ExpressBadge serviceType={order.service_type} />
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
                   {order.worker_name} · {order.company_name} ·{" "}

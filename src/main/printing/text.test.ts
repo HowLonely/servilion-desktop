@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { asciiText, dots, formatDateTime, truncate } from "./text";
+import { asciiText, dots, formatDateTime, masterTicketTitle, receiptTitle, truncate } from "./text";
 
 describe("printer text helpers", () => {
   it("converts physical dimensions to printer dots", () => {
@@ -15,5 +15,12 @@ describe("printer text helpers", () => {
   it("formats Chilean time and truncates constrained labels", () => {
     expect(formatDateTime("2026-01-15T13:30:00.000Z")).toBe("15-01-2026 10:30");
     expect(truncate("CONTRATISTA", 6)).toBe("CONTR.");
+  });
+
+  it("announces express weigh-ins on the master ticket", () => {
+    expect(masterTicketTitle({ service_type: "EXPRESS" })).toBe("EXPRESS - DIGITALIZAR");
+    expect(masterTicketTitle({ service_type: "NORMAL" })).toBe("PESAJE - DIGITALIZAR");
+    expect(receiptTitle({ service_type: "EXPRESS" })).toBe("EXPRESS - MORRAL LIMPIO");
+    expect(receiptTitle({ service_type: "NORMAL" })).toBe("BOLETA - MORRAL LIMPIO");
   });
 });
