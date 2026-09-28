@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { parseApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
+import { ExpressBadge } from "@/features/orders/components/express-badge";
 import { useFindPendingWeighIn, usePendingWeighIns } from "@/features/weighing/use-weighing";
 
 import type { components } from "@/lib/api/schema";
@@ -101,7 +102,10 @@ export function WeighInLookup({
         </span>
 
         <div className="min-w-48 flex-1">
-          <p className="font-mono text-2xl font-bold tracking-tight">{found.reference}</p>
+          <p className="flex items-center gap-2 font-mono text-2xl font-bold tracking-tight">
+            {found.reference}
+            <ExpressBadge serviceType={found.service_type} className="font-sans text-xs" />
+          </p>
           <p className="text-sm text-emerald-900/70">
             {found.company_name}
             {found.is_contractor && " · Contratista"} · pesado por {found.weighed_by_name}
@@ -219,7 +223,10 @@ export function WeighInLookup({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectSuggestion(ticket)}
               >
-                <span className="font-mono font-semibold">{ticket.reference}</span>
+                <span className="flex items-center gap-1.5 font-mono font-semibold">
+                  {ticket.reference}
+                  <ExpressBadge serviceType={ticket.service_type} className="font-sans text-[10px]" />
+                </span>
                 <span className="text-xs text-muted-foreground">
                   {ticket.company_name} · {ticket.garment_count} pz · {ticket.weight_kg} kg
                 </span>
