@@ -6,6 +6,7 @@ import { applyLaunchAtLogin, getConfig } from "./config";
 import { startHealthMonitor, stopHealthMonitor } from "./health";
 import { registerIpcHandlers } from "./ipc";
 import { restoreSession } from "./session";
+import { startAutoUpdates } from "./updater";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -83,6 +84,8 @@ if (!app.requestSingleInstanceLock()) {
     mainWindow.webContents.once("did-finish-load", () => {
       if (mainWindow) startHealthMonitor(mainWindow);
     });
+
+    startAutoUpdates(() => mainWindow);
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();

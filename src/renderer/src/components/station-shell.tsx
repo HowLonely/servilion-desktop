@@ -2,6 +2,7 @@ import { ChevronLeft, LogOut, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ServerStatusBadge } from "@/components/server-status-badge";
+import { SyncStatusBadge } from "@/components/sync-status-badge";
 import { fullName, roleLabel } from "@/lib/auth/capabilities";
 import { useSession } from "@/lib/auth/session-provider";
 
@@ -48,6 +49,7 @@ export function StationShell({
           )}
         </div>
 
+        {serverStatus === "online" && <SyncStatusBadge className="hidden md:inline-flex" />}
         <ServerStatusBadge status={serverStatus} />
 
         <div className="hidden text-right sm:block">
@@ -55,7 +57,7 @@ export function StationShell({
             {user ? fullName(user) : "—"}
           </p>
           <p className="text-xs text-muted-foreground leading-tight">
-            {user ? roleLabel(user.role) : ""} · {stationName}
+            {user ? roleLabel(user) : ""} · {stationName}
           </p>
         </div>
 

@@ -25,8 +25,8 @@ export function NoStationScreen({ onOpenSettings }: { onOpenSettings: () => void
           {user ? (
             <>
               <strong>{fullName(user)}</strong> tiene el rol{" "}
-              <strong>{roleLabel(user.role)}</strong>, que no habilita digitalizar
-              OT ni el empaque. Pide a un supervisor que revise tu rol, o inicia
+              <strong>{roleLabel(user)}</strong>, que no habilita
+              ninguna estación de esta terminal. Pide a un administrador que revise tu rol, o inicia
               sesión con otra cuenta.
             </>
           ) : null}

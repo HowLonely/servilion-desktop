@@ -11,6 +11,7 @@ import {
   login,
   logout,
 } from "./session";
+import { installUpdateNow, pendingUpdate } from "./updater";
 
 import type {
   ApiRequest,
@@ -139,6 +140,11 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     "printer:linenDispatch",
     (_event, job: LinenDispatchPrintJob): Promise<PrintResult> => printLinenDispatch(job),
   );
+
+  // --- Actualizaciones ---
+
+  ipcMain.handle("update:pending", (): string | null => pendingUpdate());
+  ipcMain.handle("update:install", (): void => installUpdateNow());
 
   // --- Ventana ---
 

@@ -25,3 +25,12 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Servilion Digitalización
+
+# Actualización automática: electron-updater lee los releases de este repo
+# público (solo binarios, sin código) y cada terminal baja la versión nueva
+# sola. Se publica con `.github/workflows/release.yml` al empujar un tag v*.
+publish:
+  provider: github
+  owner: HowLonely
+  repo: servilion-desktop-releases
+  releaseType: release

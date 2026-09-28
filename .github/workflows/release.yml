@@ -1,0 +1,35 @@
+name: Publicar versión de la terminal
+
+# Se dispara al empujar un tag de versión:
+#
+#   npm version patch      (sube package.json y crea el tag v0.1.1)
+#   git push --follow-tags
+#
+# Compila el instalador de Windows y lo publica como release en el repo
+# público HowLonely/servilion-desktop-releases. Las terminales lo encuentran
+# ahí y se actualizan solas (ver src/main/updater.ts).
+#
+# Requiere el secreto RELEASES_TOKEN: un token de GitHub (fine-grained) con
+# permiso "Contents: read and write" sobre servilion-desktop-releases.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compilar y publicar
+        run: npm run build && npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}

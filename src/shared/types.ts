@@ -186,6 +186,10 @@ export type SessionUser = {
   last_name: string;
   email: string;
   role: string;
+  /** Nombre visible del rol (los roles se crean y editan en Configuración). */
+  role_name: string;
+  /** Permisos efectivos del rol: de aquí salen las estaciones que se ofrecen. */
+  permissions: string[];
   phone: string;
   is_active: boolean;
 };

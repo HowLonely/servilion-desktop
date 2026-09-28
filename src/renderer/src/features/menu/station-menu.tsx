@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { BedDouble, FilePlus2, History, LogOut, PackageCheck, Scale, Settings, Truck } from "lucide-react";
+import { BedDouble, FilePlus2, History, LogOut, PackageCheck, Scale, Settings, SlidersHorizontal, Truck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ServerStatusBadge } from "@/components/server-status-badge";
+import { SyncStatusBadge } from "@/components/sync-status-badge";
 import { fullName, roleLabel, type Station } from "@/lib/auth/capabilities";
 import { useSession } from "@/lib/auth/session-provider";
 
@@ -41,6 +42,11 @@ const STATION_CARDS: Record<
     title: "Consultar histórico",
     description: "Guías y trabajadores, con los mismos filtros del panel web.",
     icon: History,
+  },
+  admin: {
+    title: "Configuración",
+    description: "Usuarios y roles, catálogo y estado de la sincronización con la nube.",
+    icon: SlidersHorizontal,
   },
 };
 
@@ -83,10 +89,11 @@ export function StationMenu({
             ¿Qué vas a hacer?
           </h1>
           <p className="truncate text-sm text-muted-foreground">
-            {user ? `${fullName(user)} · ${roleLabel(user.role)}` : ""}
+            {user ? `${fullName(user)} · ${roleLabel(user)}` : ""}
             {stationName ? ` · ${stationName}` : ""}
           </p>
         </div>
+        {serverStatus === "online" && <SyncStatusBadge className="hidden md:inline-flex" />}
         <ServerStatusBadge status={serverStatus} />
         <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Ajustes">
           <Settings className="size-5" />

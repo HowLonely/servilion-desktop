@@ -55,6 +55,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Users */
+        get: operations["authentication_api_list_users"];
+        put?: never;
+        /** Create User */
+        post: operations["authentication_api_create_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User */
+        get: operations["authentication_api_get_user"];
+        /** Update User */
+        put: operations["authentication_api_update_user"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{user_id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Password */
+        post: operations["authentication_api_set_password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Permissions
+         * @description Catálogo de permisos asignables, agrupado para la pantalla de roles.
+         */
+        get: operations["authentication_api_list_permissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List All Roles */
+        get: operations["authentication_api_list_all_roles"];
+        put?: never;
+        /** Create One Role */
+        post: operations["authentication_api_create_one_role"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles/{role_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get One Role */
+        get: operations["authentication_api_get_one_role"];
+        /** Update One Role */
+        put: operations["authentication_api_update_one_role"];
+        post?: never;
+        /** Delete One Role */
+        delete: operations["authentication_api_delete_one_role"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clients/": {
         parameters: {
             query?: never;
@@ -1268,6 +1378,140 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sync/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Push
+         * @description El servidor local entrega su outbox: la operación de planta.
+         */
+        post: operations["sync_api_push"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/pull": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pull
+         * @description Cambios hechos en la nube (web, app móvil) posteriores al cursor del servidor local.
+         */
+        get: operations["sync_api_pull"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/cursor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cursor
+         * @description Punto del feed desde el que leer después de bajar la foto completa.
+         */
+        get: operations["sync_api_cursor"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshot
+         * @description Foto de una tabla para instalar un servidor local.
+         */
+        get: operations["sync_api_snapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status
+         * @description Estado de la sincronización, para la cabecera de la terminal y el panel web.
+         */
+        get: operations["sync_api_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Issues */
+        get: operations["sync_api_list_issues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/issues/{issue_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve Issue */
+        post: operations["sync_api_resolve_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1294,6 +1538,10 @@ export interface components {
             email: string;
             /** Role */
             role: string;
+            /** Role Name */
+            role_name: string;
+            /** Permissions */
+            permissions: string[];
             /** Phone */
             phone: string;
             /** Is Active */
@@ -1328,6 +1576,164 @@ export interface components {
              * @default 0
              */
             offset: number;
+        };
+        /** PagedStaffUserOut */
+        PagedStaffUserOut: {
+            /** Items */
+            items: components["schemas"]["StaffUserOut"][];
+            /** Count */
+            count: number;
+        };
+        /** StaffUserOut */
+        StaffUserOut: {
+            /** Id */
+            id: number;
+            /** Username */
+            username: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Email */
+            email: string;
+            /** Role */
+            role: string;
+            /** Role Name */
+            role_name: string;
+            /** Permissions */
+            permissions: string[];
+            /** Phone */
+            phone: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Last Login */
+            last_login?: string | null;
+        };
+        /** StaffUserCreateIn */
+        StaffUserCreateIn: {
+            /** Username */
+            username: string;
+            /**
+             * First Name
+             * @default
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @default
+             */
+            last_name: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /** Role */
+            role: string;
+            /** Password */
+            password: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** StaffUserUpdateIn */
+        StaffUserUpdateIn: {
+            /** Username */
+            username: string;
+            /**
+             * First Name
+             * @default
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @default
+             */
+            last_name: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /** Role */
+            role: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /** PasswordSetIn */
+        PasswordSetIn: {
+            /** Password */
+            password: string;
+        };
+        /** PermissionOut */
+        PermissionOut: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Group */
+            group: string;
+            /** Description */
+            description: string;
+        };
+        /** RoleOut */
+        RoleOut: {
+            /** Id */
+            id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Permissions */
+            permissions: string[];
+            /** Is System */
+            is_system: boolean;
+            /** Is Active */
+            is_active: boolean;
+            /** Is Superrole */
+            is_superrole: boolean;
+            /**
+             * User Count
+             * @default 0
+             */
+            user_count: number;
+        };
+        /** RoleIn */
+        RoleIn: {
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Permissions
+             * @default []
+             */
+            permissions: string[];
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
         };
         /** ClientOut */
         ClientOut: {
@@ -3220,6 +3626,180 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** PushOut */
+        PushOut: {
+            /** Applied */
+            applied: number;
+            /** Skipped */
+            skipped: number;
+            /** Issues */
+            issues: string[];
+        };
+        /** ChangeIn */
+        ChangeIn: {
+            /** Table */
+            table: string;
+            /** Id */
+            id: number;
+            /** Op */
+            op: string;
+            /** Data */
+            data?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** PushIn */
+        PushIn: {
+            /** Changes */
+            changes: components["schemas"]["ChangeIn"][];
+            /**
+             * Pending
+             * @default 0
+             */
+            pending: number;
+        };
+        /** ChangeOut */
+        ChangeOut: {
+            /** Table */
+            table: string;
+            /** Id */
+            id: number;
+            /** Op */
+            op: string;
+            /** Data */
+            data?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** PullOut */
+        PullOut: {
+            /** Changes */
+            changes: components["schemas"]["ChangeOut"][];
+            /** Last Id */
+            last_id: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** CursorOut */
+        CursorOut: {
+            /** Last Id */
+            last_id: number;
+        };
+        /** SnapshotOut */
+        SnapshotOut: {
+            /** Table */
+            table: string;
+            /** Rows */
+            rows: components["schemas"]["SnapshotRowOut"][];
+            /** Last Id */
+            last_id: number;
+            /** Has More */
+            has_more: boolean;
+        };
+        /** SnapshotRowOut */
+        SnapshotRowOut: {
+            /** Id */
+            id: number;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+        };
+        /** NodeStatusOut */
+        NodeStatusOut: {
+            /** Name */
+            name: string;
+            /** Online */
+            online: boolean;
+            /** Last Push At */
+            last_push_at: string | null;
+            /** Last Pull At */
+            last_pull_at: string | null;
+            /** Pending Changes */
+            pending_changes: number;
+        };
+        /** SyncStatusOut */
+        SyncStatusOut: {
+            /** Node */
+            node: string;
+            /**
+             * Configured
+             * @default false
+             */
+            configured: boolean;
+            /**
+             * Cloud Url
+             * @default
+             */
+            cloud_url: string;
+            /**
+             * Bootstrapped
+             * @default false
+             */
+            bootstrapped: boolean;
+            /**
+             * Online
+             * @default false
+             */
+            online: boolean;
+            /**
+             * Pending Changes
+             * @default 0
+             */
+            pending_changes: number;
+            /** Last Push At */
+            last_push_at?: string | null;
+            /** Last Pull At */
+            last_pull_at?: string | null;
+            /** Last Error */
+            last_error?: string | null;
+            /**
+             * Retention Days
+             * @default 0
+             */
+            retention_days: number;
+            /**
+             * Open Issues
+             * @default 0
+             */
+            open_issues: number;
+            /**
+             * Nodes
+             * @default []
+             */
+            nodes: components["schemas"]["NodeStatusOut"][];
+        };
+        /** PagedSyncIssueOut */
+        PagedSyncIssueOut: {
+            /** Items */
+            items: components["schemas"]["SyncIssueOut"][];
+            /** Count */
+            count: number;
+        };
+        /** SyncIssueOut */
+        SyncIssueOut: {
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Table */
+            table: string;
+            /** Row Id */
+            row_id: number;
+            /** Detail */
+            detail: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Resolved At */
+            resolved_at: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -3311,6 +3891,318 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserOut"];
+                };
+            };
+        };
+    };
+    authentication_api_list_users: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                role?: string | null;
+                is_active?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedStaffUserOut"];
+                };
+            };
+        };
+    };
+    authentication_api_create_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffUserCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUserOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    authentication_api_get_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUserOut"];
+                };
+            };
+        };
+    };
+    authentication_api_update_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffUserUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUserOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    authentication_api_set_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordSetIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUserOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    authentication_api_list_permissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionOut"][];
+                };
+            };
+        };
+    };
+    authentication_api_list_all_roles: {
+        parameters: {
+            query?: {
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOut"][];
+                };
+            };
+        };
+    };
+    authentication_api_create_one_role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    authentication_api_get_one_role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOut"];
+                };
+            };
+        };
+    };
+    authentication_api_update_one_role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    authentication_api_delete_one_role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
                 };
             };
         };
@@ -5620,6 +6512,209 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PagedIncidentOut"];
+                };
+            };
+        };
+    };
+    sync_api_push: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    sync_api_pull: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    sync_api_cursor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CursorOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    sync_api_snapshot: {
+        parameters: {
+            query: {
+                table: string;
+                after_id?: number;
+                limit?: number;
+                retention_days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOut"];
+                };
+            };
+        };
+    };
+    sync_api_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncStatusOut"];
+                };
+            };
+        };
+    };
+    sync_api_list_issues: {
+        parameters: {
+            query?: {
+                resolved?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedSyncIssueOut"];
+                };
+            };
+        };
+    };
+    sync_api_resolve_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                issue_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncIssueOut"];
                 };
             };
         };

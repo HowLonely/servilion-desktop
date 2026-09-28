@@ -67,6 +67,19 @@ const servilion = {
       ipcRenderer.invoke("printer:linenDispatch", job),
   },
 
+  updates: {
+    /** Versión nueva ya descargada, o null. */
+    pending: (): Promise<string | null> => ipcRenderer.invoke("update:pending"),
+    /** Avisa cuando termina de bajar una versión nueva. */
+    onReady: (listener: (version: string) => void): (() => void) => {
+      const handler = (_event: unknown, version: string): void => listener(version);
+      ipcRenderer.on("update:ready", handler);
+      return () => ipcRenderer.removeListener("update:ready", handler);
+    },
+    /** Cierra la app, instala la versión nueva y la vuelve a abrir. */
+    install: (): Promise<void> => ipcRenderer.invoke("update:install"),
+  },
+
   app: {
     quit: (): Promise<void> => ipcRenderer.invoke("app:quit"),
   },
