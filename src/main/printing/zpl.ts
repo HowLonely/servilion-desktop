@@ -10,7 +10,12 @@ import {
   truncate,
 } from "./text";
 
-import type { PrinterConfig, ReceiptPrintJob, WeighPrintJob } from "../../shared/types";
+import type {
+  LinenDispatchPrintJob,
+  PrinterConfig,
+  ReceiptPrintJob,
+  WeighPrintJob,
+} from "../../shared/types";
 
 /**
  * ZPL — Zebra Programming Language.
@@ -244,6 +249,59 @@ export function buildReceiptZpl(job: ReceiptPrintJob, printer: PrinterConfig): s
       ),
     ),
     text(footerMm, 2.6, footer),
+    "^XZ",
+  ].join("\n");
+}
+
+/**
+ * Guía de despacho de lencería: acompaña la carga limpia que sale de la planta
+ * hacia la faena del cliente de hotelería.
+ *
+ * Mismo criterio de alto que la boleta: el detalle crece una línea por tipo de
+ * lencería y el alto se calcula desde donde cae el pie. Termina con una línea
+ * de firma porque en faena la carga la recibe el encargado del cliente, y es la
+ * única constancia en papel de cuánto llegó.
+ */
+export function buildLinenDispatchZpl(job: LinenDispatchPrintJob, printer: PrinterConfig): string {
+  const { dpi } = printer;
+  const width = dots(printer.labelWidthMm, dpi);
+  const margin = dots(3, dpi);
+  const line = (mm: number): number => margin + dots(mm, dpi);
+  const itemMm = 4.2;
+  const itemsTopMm = 36;
+  const totalMm = itemsTopMm + job.lines.length * itemMm + 2;
+  const signatureMm = totalMm + 12;
+  const height = margin + dots(signatureMm + 8, dpi);
+  const text = (mm: number, sizeMm: number, value: string): string =>
+    `^FO${margin},${line(mm)}^A0N,${dots(sizeMm, dpi)},${dots(sizeMm, dpi)}^FD${value}^FS`;
+  const rule = (mm: number): string =>
+    `^FO${margin},${line(mm)}^GB${width - margin * 2},${Math.max(1, dots(0.3, dpi))},${Math.max(1, dots(0.3, dpi))}^FS`;
+
+  return [
+    "^XA",
+    "^CI13",
+    `^PW${width}`,
+    `^LL${height}`,
+    "^LH0,0",
+
+    text(0, 3, "GUIA DE DESPACHO - HOTELERIA"),
+    text(4, 8, asciiText(job.number)),
+    text(14, 4, truncate(asciiText(job.company_name).toUpperCase(), 26)),
+    text(19, 2.8, truncate(asciiText(job.faena), 40) || "-"),
+    text(23, 2.6, `${formatDateTime(job.occurred_at)}${SEPARATOR}${truncate(asciiText(job.registered_by_name), 24)}`),
+    rule(28),
+
+    text(30.5, 2.6, "LENCERIA LIMPIA DESPACHADA"),
+    ...job.lines.map((item, index) =>
+      text(
+        itemsTopMm + index * itemMm,
+        3.2,
+        `${item.quantity} x ${truncate(asciiText(item.name).toUpperCase(), 30)}`,
+      ),
+    ),
+    rule(totalMm - 1),
+    text(totalMm, 4.2, `TOTAL ${job.total_quantity} PIEZAS`),
+    text(signatureMm, 2.8, "RECIBE EN FAENA: ______________________"),
     "^XZ",
   ].join("\n");
 }

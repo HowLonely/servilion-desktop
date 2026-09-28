@@ -34,7 +34,7 @@ const STATION_CARDS: Record<
   },
   hospitality: {
     title: "Lencería de hotelería",
-    description: "Carga a granel del campamento: cuánto entró, cuánto volvió y la merma.",
+    description: "Despachar lencería limpia a faena y ver el saldo de cada campamento.",
     icon: BedDouble,
   },
   history: {

@@ -11,7 +11,12 @@ import {
 } from "./text";
 import { receiptScanCode } from "./zpl";
 
-import type { PrinterConfig, ReceiptPrintJob, WeighPrintJob } from "../../shared/types";
+import type {
+  LinenDispatchPrintJob,
+  PrinterConfig,
+  ReceiptPrintJob,
+  WeighPrintJob,
+} from "../../shared/types";
 
 /**
  * EPL2 — *Eltron Programming Language*, versión 2.
@@ -218,6 +223,43 @@ export function buildReceiptEpl(job: ReceiptPrintJob, printer: PrinterConfig): s
       dots(2.6, dpi),
       job.is_contractor ? `${origin}${SEPARATOR}CONTRATISTA` : origin,
     ),
+    "P1",
+  ].join("\n");
+}
+
+/** Guía de despacho de lencería. Mismo layout que en ZPL (ver `buildLinenDispatchZpl`). */
+export function buildLinenDispatchEpl(job: LinenDispatchPrintJob, printer: PrinterConfig): string {
+  const { dpi } = printer;
+  const margin = dots(3, dpi);
+  const at = (mm: number): number => margin + dots(mm, dpi);
+  const itemMm = 4.2;
+  const itemsTopMm = 36;
+  const totalMm = itemsTopMm + job.lines.length * itemMm + 2;
+  const signatureMm = totalMm + 12;
+
+  return [
+    ...open(printer, signatureMm + 8),
+    text(margin, at(0), dots(3, dpi), "GUIA DE DESPACHO - HOTELERIA"),
+    text(margin, at(4), dots(8, dpi), job.number),
+    text(margin, at(14), dots(4, dpi), truncate(asciiText(job.company_name).toUpperCase(), 26)),
+    text(margin, at(19), dots(2.8, dpi), truncate(asciiText(job.faena), 40) || "-"),
+    text(
+      margin,
+      at(23),
+      dots(2.6, dpi),
+      `${formatDateTime(job.occurred_at)}${SEPARATOR}${truncate(asciiText(job.registered_by_name), 24)}`,
+    ),
+    text(margin, at(30.5), dots(2.6, dpi), "LENCERIA LIMPIA DESPACHADA"),
+    ...job.lines.map((item, index) =>
+      text(
+        margin,
+        at(itemsTopMm + index * itemMm),
+        dots(3.2, dpi),
+        `${item.quantity} x ${truncate(asciiText(item.name).toUpperCase(), 30)}`,
+      ),
+    ),
+    text(margin, at(totalMm), dots(4.2, dpi), `TOTAL ${job.total_quantity} PIEZAS`),
+    text(margin, at(signatureMm), dots(2.8, dpi), "RECIBE EN FAENA: ______________________"),
     "P1",
   ].join("\n");
 }

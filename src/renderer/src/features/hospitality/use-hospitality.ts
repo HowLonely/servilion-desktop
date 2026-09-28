@@ -5,134 +5,83 @@ import { parseApiError } from "@/lib/api/errors";
 
 import type { components } from "@/lib/api/schema";
 
-type LinenBatchOut = components["schemas"]["LinenBatchOut"];
-type LinenBatchIn = components["schemas"]["LinenBatchIn"];
-type ReturnCountIn = components["schemas"]["ReturnCountIn"];
+type DispatchIn = components["schemas"]["DispatchIn"];
+type LinenMovementOut = components["schemas"]["LinenMovementOut"];
 
 export const hospitalityKeys = {
   all: ["hospitality"] as const,
-  list: (status: string | undefined) => ["hospitality", "list", status] as const,
-  detail: (id: number) => ["hospitality", "detail", id] as const,
+  balances: ["hospitality", "balances"] as const,
+  recentDispatches: ["hospitality", "recent-dispatches"] as const,
 };
 
-// Cuántos lotes muestra la terminal. Es una lista de trabajo —los que están en
-// planta ahora—, no un historial: el histórico completo se consulta en el panel
-// web, que tiene filtros y paginación.
-export const BATCH_LIST_SIZE = 25;
+// Cuántos despachos recientes muestra la terminal para reimprimir la guía. Es
+// una lista de trabajo del turno, no un historial: eso está en el panel web.
+export const RECENT_DISPATCHES = 8;
 
 /**
- * Lotes de lencería, opcionalmente filtrados por estado.
+ * Saldo de lencería de todos los clientes de hotelería.
  *
- * La mesa de conteo solo quiere los que siguen en planta, así que pide
- * `status` y no se trae los despachados de la semana.
+ * Una sola respuesta alcanza para todo en esta terminal: la lista de clientes a
+ * los que se despacha, los tipos de lencería de cada uno y los saldos.
  */
-export function useBatches(status?: string) {
+export function useBalances() {
   return useQuery({
-    queryKey: hospitalityKeys.list(status),
+    queryKey: hospitalityKeys.balances,
     queryFn: async () => {
-      const { data, error } = await api.GET("/api/hospitality/", {
-        params: { query: { limit: BATCH_LIST_SIZE, ...(status ? { status } : {}) } },
+      const { data, error } = await api.GET("/api/hospitality/balances");
+      if (error) throw error;
+      return data;
+    },
+    // Los repartos y retiros llegan desde la app móvil sin que esta terminal
+    // haga nada: se refresca sola para no mostrar un saldo viejo.
+    refetchInterval: 60_000,
+  });
+}
+
+export function useRecentDispatches() {
+  return useQuery({
+    queryKey: hospitalityKeys.recentDispatches,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/hospitality/movements", {
+        params: { query: { kind: "DESPACHO", include_voided: false, limit: RECENT_DISPATCHES } },
       });
       if (error) throw error;
       return data.items;
     },
-    placeholderData: (previous) => previous,
   });
 }
 
-/**
- * Los lotes que siguen en planta, que es lo único que la mesa de conteo mira.
- *
- * Son dos consultas y no una filtrada en memoria porque el listado viene
- * ordenado por fecha y paginado: en una semana movida los despachados
- * empujarían fuera de la página justo a los que quedan por contar.
- */
-export function useBatchesInPlant() {
-  const received = useBatches("RECIBIDO");
-  const inProcess = useBatches("EN_PROCESO");
-
-  const batches = [...(received.data ?? []), ...(inProcess.data ?? [])].sort(
-    (a, b) => b.received_at.localeCompare(a.received_at),
-  );
-
-  return {
-    batches,
-    isLoading: received.isLoading || inProcess.isLoading,
-  };
-}
-
-export function useBatch(batchId: number | undefined) {
-  return useQuery({
-    queryKey: hospitalityKeys.detail(batchId ?? -1),
-    queryFn: async () => {
-      const { data, error } = await api.GET("/api/hospitality/{batch_id}", {
-        params: { path: { batch_id: batchId! } },
-      });
-      if (error) throw error;
+export function useRegisterDispatch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: DispatchIn): Promise<LinenMovementOut> => {
+      const { data, error } = await api.POST("/api/hospitality/dispatches", { body });
+      if (error) throw parseApiError(error);
       return data;
     },
-    enabled: batchId !== undefined,
-  });
-}
-
-export function useCreateBatch() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (body: LinenBatchIn) => {
-      const { data, error } = await api.POST("/api/hospitality/", { body });
-      if (error) throw parseApiError(error);
-      return data as LinenBatchOut;
-    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: hospitalityKeys.all });
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.all });
     },
   });
 }
 
 /**
- * Cuenta de salida del lote: cuántas piezas de cada tipo volvieron del lavado.
+ * Trae la guía de un despacho y la manda a la impresora de documentos.
  *
- * Es repetible mientras el lote no se despache, porque contar cientos de
- * sábanas admite corrección y obligar a despachar para arreglar un número sería
- * peor. El backend mueve el lote a EN_PROCESO en la primera cuenta, así que la
- * terminal no declara ese estado por su cuenta.
+ * No se cachea, igual que las etiquetas del pesaje: si el despacho se anuló
+ * desde la web, el servidor lo rechaza y no se imprime una guía que ya no vale.
  */
-export function useRegisterReturnCount(batchId: number) {
-  const queryClient = useQueryClient();
+export function usePrintLinenDispatch() {
   return useMutation({
-    mutationFn: async (counts: ReturnCountIn[]) => {
-      const { data, error } = await api.POST(
-        "/api/hospitality/{batch_id}/return-count",
-        { params: { path: { batch_id: batchId } }, body: { counts } },
-      );
-      if (error) throw parseApiError(error);
-      return data as LinenBatchOut;
-    },
-    onSuccess: (batch) => {
-      queryClient.setQueryData(hospitalityKeys.detail(batchId), batch);
-      queryClient.invalidateQueries({ queryKey: ["hospitality", "list"] });
-    },
-  });
-}
+    mutationFn: async (movementId: number) => {
+      const { data, error } = await api.GET("/api/hospitality/movements/{movement_id}/print", {
+        params: { path: { movement_id: movementId } },
+      });
+      if (error) throw new Error(parseApiError(error).detail);
 
-/**
- * Despacha la carga limpia y cierra el lote. Solo SUPERVISOR (y ADMIN): el
- * backend lo exige así porque el despacho fija la merma definitiva del lote.
- */
-export function useDispatchBatch(batchId: number) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (body: { received_by_client: string; note: string }) => {
-      const { data, error } = await api.POST(
-        "/api/hospitality/{batch_id}/dispatch",
-        { params: { path: { batch_id: batchId } }, body },
-      );
-      if (error) throw parseApiError(error);
-      return data as LinenBatchOut;
-    },
-    onSuccess: (batch) => {
-      queryClient.setQueryData(hospitalityKeys.detail(batchId), batch);
-      queryClient.invalidateQueries({ queryKey: hospitalityKeys.all });
+      const result = await window.servilion.printer.linenDispatch(data);
+      if (!result.ok) throw new Error(result.detail);
+      return data;
     },
   });
 }

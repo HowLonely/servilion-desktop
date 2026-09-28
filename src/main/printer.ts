@@ -7,9 +7,10 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 
 import { getConfig } from "./config";
-import { buildReceiptPayload, buildWeighPayload } from "./printing";
+import { buildLinenDispatchPayload, buildReceiptPayload, buildWeighPayload } from "./printing";
 
 import type {
+  LinenDispatchPrintJob,
   PrintResult,
   PrinterConfig,
   ReceiptPrintJob,
@@ -92,6 +93,16 @@ export async function printWeighLabels(job: WeighPrintJob): Promise<PrintResult>
  */
 export async function printReceipt(job: ReceiptPrintJob): Promise<PrintResult> {
   return send(receiptPrinter(), (printer) => buildReceiptPayload(job, printer));
+}
+
+/**
+ * Imprime la guía de despacho de lencería de hotelería.
+ *
+ * Sale por la impresora de documentos, como la boleta. Mismo criterio de
+ * errores: el despacho ya quedó registrado y la guía se reimprime.
+ */
+export async function printLinenDispatch(job: LinenDispatchPrintJob): Promise<PrintResult> {
+  return send(receiptPrinter(), (printer) => buildLinenDispatchPayload(job, printer));
 }
 
 /**
