@@ -17,11 +17,13 @@ import {
   useGarmentTypes,
 } from "@/features/garments/use-garment-types";
 import { useCreateOrder } from "@/features/orders/hooks/use-orders";
+import { useUploadOrderPhoto } from "@/features/orders/hooks/use-order-photo";
 import {
   orderSchema,
   type OrderFormValues,
 } from "@/features/orders/schemas/order-schema";
 import { useWorker } from "@/features/workers/use-workers";
+import { OrderPhotoCapture } from "@/features/digitize/order-photo-capture";
 import { WeighInLookup } from "@/features/digitize/weigh-in-lookup";
 import { WorkerSelect } from "@/features/workers/worker-select";
 
@@ -31,6 +33,16 @@ type GarmentTypeOut = components["schemas"]["GarmentTypeOut"];
 type LaundryOrderOut = components["schemas"]["LaundryOrderOut"];
 
 const MAX_SUGGESTIONS = 6;
+
+/**
+ * Qué pasó con la foto de la OT al guardar. La guía se guarda aunque la foto no
+ * suba (S3 depende de internet y el servidor de planta no), así que el fallo
+ * viaja con la foto para ofrecer reintentar desde la confirmación.
+ */
+export type PhotoOutcome =
+  | { status: "none" }
+  | { status: "uploaded" }
+  | { status: "failed"; photo: Blob; detail: string };
 
 // Digitalización de la OT física (paso 4). Esta vista está pensada como una
 // terminal de digitación: la mano se queda en el teclado, la prenda se agrega
@@ -44,9 +56,11 @@ const MAX_SUGGESTIONS = 6;
 export function CreateOrderForm({
   onCreated,
 }: {
-  onCreated: (order: LaundryOrderOut) => void;
+  onCreated: (order: LaundryOrderOut, photo: PhotoOutcome) => void;
 }) {
   const createOrder = useCreateOrder();
+  const uploadPhoto = useUploadOrderPhoto();
+  const [photo, setPhoto] = useState<Blob | null>(null);
   const { data: garmentsPage } = useGarmentTypes({
     is_active: true,
     limit: GARMENT_TYPES_SELECT_LIMIT,
@@ -121,11 +135,21 @@ export function CreateOrderForm({
         shift: values.shift || worker?.shift || "",
         received_at: localInputToIsoUtc(values.received_at),
       });
-      onCreated(order);
+      onCreated(order, await savePhoto(order.id));
     } catch (error) {
       const apiError = parseApiError(error);
       applyServerErrors(apiError, setError);
       toast.error(apiError.detail);
+    }
+  }
+
+  async function savePhoto(orderId: number): Promise<PhotoOutcome> {
+    if (!photo) return { status: "none" };
+    try {
+      await uploadPhoto.mutateAsync({ orderId, photo });
+      return { status: "uploaded" };
+    } catch (error) {
+      return { status: "failed", photo, detail: parseApiError(error).detail };
     }
   }
 
@@ -327,9 +351,15 @@ export function CreateOrderForm({
         />
       </section>
 
-      {/* 3 · Cierre */}
+      {/* 3 · Foto de la OT física */}
       <section className="flex flex-col gap-4">
-        <SectionTitle number={3}>Observaciones y guardado</SectionTitle>
+        <SectionTitle number={3}>Foto de la OT</SectionTitle>
+        <OrderPhotoCapture photo={photo} onChange={setPhoto} />
+      </section>
+
+      {/* 4 · Cierre */}
+      <section className="flex flex-col gap-4">
+        <SectionTitle number={4}>Observaciones y guardado</SectionTitle>
         <BigField label="Observaciones (faltantes o sobrantes)" htmlFor="observations">
           <Textarea id="observations" className="text-base" {...register("observations")} />
         </BigField>
@@ -339,7 +369,11 @@ export function CreateOrderForm({
           className="h-14 w-full text-lg sm:w-auto sm:self-end sm:px-10"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Guardando..." : "Digitalizar OT"}
+          {uploadPhoto.isPending
+            ? "Subiendo foto..."
+            : isSubmitting
+              ? "Guardando..."
+              : "Digitalizar OT"}
         </Button>
       </section>
     </form>

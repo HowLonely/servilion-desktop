@@ -1,6 +1,6 @@
 import { join } from "node:path";
 
-import { BrowserWindow, app, shell } from "electron";
+import { BrowserWindow, app, session, shell } from "electron";
 
 import { applyLaunchAtLogin, getConfig } from "./config";
 import { startHealthMonitor, stopHealthMonitor } from "./health";
@@ -68,6 +68,17 @@ if (!app.requestSingleInstanceLock()) {
 
   void app.whenReady().then(async () => {
     applyLaunchAtLogin(getConfig().launchAtLogin);
+
+    // Electron concede por defecto todo permiso que pida la página. La
+    // terminal solo necesita la cámara de documentos (foto de la OT), sin
+    // micrófono; cualquier otra cosa se niega.
+    session.defaultSession.setPermissionRequestHandler(
+      (_webContents, permission, callback, details) => {
+        const mediaTypes = "mediaTypes" in details ? (details.mediaTypes ?? []) : [];
+        callback(permission === "media" && !mediaTypes.includes("audio"));
+      },
+    );
+
     registerIpcHandlers(() => mainWindow);
 
     // Reanudar la sesión ANTES de abrir la ventana evita el parpadeo del login

@@ -58,6 +58,8 @@ function defaults(): StationConfig {
     touchMode: false,
     printer: defaultPrinter(),
     receiptPrinter: defaultReceiptPrinter(),
+    cameraDeviceId: "",
+    cameraRotation: 0,
   };
 }
 

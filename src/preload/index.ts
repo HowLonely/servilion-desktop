@@ -12,6 +12,8 @@ import type {
   ServerStatus,
   SessionState,
   StationConfig,
+  StorageUploadRequest,
+  StorageUploadResult,
   WeighPrintJob,
 } from "../shared/types";
 
@@ -65,6 +67,12 @@ const servilion = {
     /** Imprime (o reimprime) la guía de despacho de lencería de hotelería. */
     linenDispatch: (job: LinenDispatchPrintJob): Promise<PrintResult> =>
       ipcRenderer.invoke("printer:linenDispatch", job),
+  },
+
+  storage: {
+    /** Sube un archivo a S3 con el POST prefirmado que entregó el backend. */
+    upload: (request: StorageUploadRequest): Promise<StorageUploadResult> =>
+      ipcRenderer.invoke("storage:upload", request),
   },
 
   updates: {

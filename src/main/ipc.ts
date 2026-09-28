@@ -11,6 +11,7 @@ import {
   login,
   logout,
 } from "./session";
+import { uploadToStorage } from "./storage";
 import { installUpdateNow, pendingUpdate } from "./updater";
 
 import type {
@@ -25,6 +26,8 @@ import type {
   ServerStatus,
   SessionState,
   StationConfig,
+  StorageUploadRequest,
+  StorageUploadResult,
   WeighPrintJob,
 } from "../shared/types";
 
@@ -139,6 +142,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle(
     "printer:linenDispatch",
     (_event, job: LinenDispatchPrintJob): Promise<PrintResult> => printLinenDispatch(job),
+  );
+
+  // --- Almacenamiento (fotos de la OT) ---
+
+  ipcMain.handle(
+    "storage:upload",
+    (_event, request: StorageUploadRequest): Promise<StorageUploadResult> =>
+      uploadToStorage(request),
   );
 
   // --- Actualizaciones ---
