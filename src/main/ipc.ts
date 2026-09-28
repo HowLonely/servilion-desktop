@@ -3,7 +3,7 @@ import { app, ipcMain, type BrowserWindow } from "electron";
 import { httpRequest } from "./api";
 import { getConfig, normalizeServerUrl, setConfig } from "./config";
 import { checkNow, getServerStatus, resetStatus } from "./health";
-import { printReceipt, printWeighLabels } from "./printer";
+import { printLinenDispatch, printReceipt, printWeighLabels } from "./printer";
 import {
   authorizedRequest,
   getSessionState,
@@ -16,6 +16,7 @@ import type {
   ApiRequest,
   ApiResponse,
   ConnectionTest,
+  LinenDispatchPrintJob,
   LoginRequest,
   LoginResult,
   PrintResult,
@@ -132,6 +133,11 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle(
     "printer:receipt",
     (_event, job: ReceiptPrintJob): Promise<PrintResult> => printReceipt(job),
+  );
+
+  ipcMain.handle(
+    "printer:linenDispatch",
+    (_event, job: LinenDispatchPrintJob): Promise<PrintResult> => printLinenDispatch(job),
   );
 
   // --- Ventana ---

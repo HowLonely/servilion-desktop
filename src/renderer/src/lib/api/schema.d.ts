@@ -1006,28 +1006,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/hospitality/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Batches */
-        get: operations["hospitality_api_list_batches"];
-        put?: never;
-        /**
-         * Create Batch
-         * @description Registra la llegada de una carga de lencería sucia del campamento.
-         */
-        post: operations["hospitality_api_create_batch"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hospitality/counters": {
+    "/api/hospitality/balances": {
         parameters: {
             query?: never;
             header?: never;
@@ -1035,10 +1014,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Counters
-         * @description Indicadores del servicio: lotes en planta, piezas y merma acumulada.
+         * Get Balances
+         * @description Dónde está la lencería de cada cliente: Servilion, bodega de faena y campamentos.
+         *
+         *     Sin `company_id` trae todos los clientes de hotelería: es lo que baja la app
+         *     móvil para ver el saldo del campamento sin señal.
          */
-        get: operations["hospitality_api_get_counters"];
+        get: operations["hospitality_api_get_balances"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1047,15 +1029,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/hospitality/{batch_id}": {
+    "/api/hospitality/movements": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Batch */
-        get: operations["hospitality_api_get_batch"];
+        /** List Movements */
+        get: operations["hospitality_api_list_movements"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1064,44 +1046,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/hospitality/{batch_id}/note": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Batch Note
-         * @description Acta de devolución que el encargado del campamento revisa y firma.
-         */
-        get: operations["hospitality_api_get_batch_note"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hospitality/{batch_id}/process": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Start Processing */
-        post: operations["hospitality_api_start_processing"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/hospitality/{batch_id}/return-count": {
+    "/api/hospitality/dispatches": {
         parameters: {
             query?: never;
             header?: never;
@@ -1111,17 +1056,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Register Return Count
-         * @description Cuenta de salida por tipo de lencería: es donde aparece la merma.
+         * Register Dispatch
+         * @description Despacho de lencería limpia desde la planta a la faena del cliente.
          */
-        post: operations["hospitality_api_register_return_count"];
+        post: operations["hospitality_api_register_dispatch"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/hospitality/{batch_id}/dispatch": {
+    "/api/hospitality/counts": {
         parameters: {
             query?: never;
             header?: never;
@@ -1131,10 +1076,90 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Dispatch Batch
-         * @description Despacha la carga limpia de vuelta a faena y cierra el lote.
+         * Register Count
+         * @description Conteo de inventario de un campamento o de la bodega de faena.
          */
-        post: operations["hospitality_api_dispatch_batch"];
+        post: operations["hospitality_api_register_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/field-sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Field Movements
+         * @description Cola de repartos y retiros que la app móvil registró en faena.
+         *
+         *     Cada movimiento se resuelve por separado: uno rechazado no bloquea al resto
+         *     de la cola, y reenviar uno ya recibido responde DUPLICADO sin repetirlo.
+         */
+        post: operations["hospitality_api_sync_field_movements"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/movements/{movement_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Movement */
+        get: operations["hospitality_api_get_movement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/movements/{movement_id}/print": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dispatch Print Job
+         * @description Datos de la guía de despacho para la etiquetera de la planta.
+         */
+        get: operations["hospitality_api_get_dispatch_print_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hospitality/movements/{movement_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Void Movement
+         * @description Anula un movimiento mal registrado; su efecto sale de los saldos.
+         */
+        post: operations["hospitality_api_void_movement"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1622,6 +1647,8 @@ export interface components {
             name: string;
             /** Is Active */
             is_active: boolean;
+            /** Is Linen */
+            is_linen: boolean;
         };
         /** PagedGarmentTypeOut */
         PagedGarmentTypeOut: {
@@ -1641,6 +1668,11 @@ export interface components {
              * @default true
              */
             is_active: boolean;
+            /**
+             * Is Linen
+             * @default false
+             */
+            is_linen: boolean;
         };
         /** FaenaOut */
         FaenaOut: {
@@ -2698,222 +2730,282 @@ export interface components {
              */
             confirm_different_room: boolean;
         };
-        /** LinenBatchItemOut */
-        LinenBatchItemOut: {
-            /** Id */
-            id: number;
+        /** BalanceLineOut */
+        BalanceLineOut: {
             /** Garment Type Id */
-            garment_type_id: number | null;
+            garment_type_id: number;
+            /** Quantity */
+            quantity: number;
+        };
+        /**
+         * BalanceLocationOut
+         * @description Una fila del saldo: un lugar y cuántas piezas de cada tipo tiene.
+         *
+         *     `has_negative` avisa que el sistema cree que hay menos de cero: se retiró
+         *     más de lo que tenía registrado. No es un error del registro en terreno,
+         *     sino una señal de que ese lugar necesita un conteo de inventario.
+         */
+        BalanceLocationOut: {
+            /** Kind */
+            kind: string;
+            /** Camp Id */
+            camp_id: number | null;
             /** Name */
             name: string;
-            /** Quantity In */
-            quantity_in: number;
-            /** Quantity Out */
-            quantity_out: number | null;
-            /** Shortage */
-            shortage: number | null;
-            /** Weight Kg */
-            weight_kg: number | null;
+            /** Lines */
+            lines: components["schemas"]["BalanceLineOut"][];
+            /** Total */
+            total: number;
+            /** Has Negative */
+            has_negative: boolean;
+            /** Last Counted At */
+            last_counted_at: string | null;
         };
-        /** LinenBatchOut */
-        LinenBatchOut: {
-            /** Id */
-            id: number;
-            /** Batch Number */
-            batch_number: string;
+        /** CompanyBalanceOut */
+        CompanyBalanceOut: {
             /** Company Id */
             company_id: number;
             /** Company Name */
             company_name: string;
-            /** Company Logo Url */
-            company_logo_url: string | null;
+            /** Faena Name */
+            faena_name: string;
+            /** Linen Types */
+            linen_types: components["schemas"]["LinenTypeOut"][];
+            /** Locations */
+            locations: components["schemas"]["BalanceLocationOut"][];
+        };
+        /** LinenTypeOut */
+        LinenTypeOut: {
+            /** Id */
+            id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** LinenLineOut */
+        LinenLineOut: {
+            /** Garment Type Id */
+            garment_type_id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Quantity */
+            quantity: number;
+            /** Difference */
+            difference: number | null;
+        };
+        /** LinenMovementOut */
+        LinenMovementOut: {
+            /** Id */
+            id: number;
+            /**
+             * Client Uuid
+             * Format: uuid
+             */
+            client_uuid: string;
+            /** Kind */
+            kind: string;
+            /** Kind Label */
+            kind_label: string;
+            /** Number */
+            number: string;
+            /** Company Id */
+            company_id: number;
+            /** Company Name */
+            company_name: string;
             /** Camp Id */
             camp_id: number | null;
             /** Camp Name */
             camp_name: string;
-            /** Status */
-            status: string;
+            /** Location Name */
+            location_name: string;
             /**
-             * Received At
+             * Occurred At
              * Format: date-time
              */
-            received_at: string;
-            /** Promised At */
-            promised_at: string | null;
-            /** Dispatched At */
-            dispatched_at: string | null;
-            /** Weight Kg */
-            weight_kg: number | null;
-            /** Observations */
-            observations: string;
-            /** Received By Client */
-            received_by_client: string;
-            /** Items */
-            items: components["schemas"]["LinenBatchItemOut"][];
-            /** Total In */
-            total_in: number;
-            /** Total Out */
-            total_out: number | null;
-            /** Shortage */
-            shortage: number | null;
-            /** Is Counted */
-            is_counted: boolean;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
+            occurred_at: string;
+            /** Registered By Name */
+            registered_by_name: string;
+            /** Note */
+            note: string;
+            /** Total Quantity */
+            total_quantity: number;
+            /** Lines */
+            lines: components["schemas"]["LinenLineOut"][];
+            /** Is Voided */
+            is_voided: boolean;
+            /** Voided At */
+            voided_at: string | null;
+            /** Voided By Name */
+            voided_by_name: string;
+            /** Void Reason */
+            void_reason: string;
         };
-        /** PagedLinenBatchOut */
-        PagedLinenBatchOut: {
+        /** PagedLinenMovementOut */
+        PagedLinenMovementOut: {
             /** Items */
-            items: components["schemas"]["LinenBatchOut"][];
+            items: components["schemas"]["LinenMovementOut"][];
             /** Count */
             count: number;
         };
-        /** LinenBatchIn */
-        LinenBatchIn: {
+        /**
+         * DispatchIn
+         * @description Despacho de lencería limpia desde la planta a la faena del cliente.
+         */
+        DispatchIn: {
             /** Company Id */
             company_id: number;
-            /** Camp Id */
-            camp_id?: number | null;
-            /** Received At */
-            received_at?: string | null;
-            /** Promised At */
-            promised_at?: string | null;
-            /** Weight Kg */
-            weight_kg?: number | null;
-            /**
-             * Observations
-             * @default
-             */
-            observations: string;
-            /**
-             * Items
-             * @default []
-             */
-            items: components["schemas"]["LinenBatchItemIn"][];
-        };
-        /**
-         * LinenBatchItemIn
-         * @description Una línea de la carga: tipo de lencería y cuánto entró.
-         *
-         *     `garment_type_id` es opcional porque el campamento manda lencería que no
-         *     siempre está en el catálogo; en ese caso llega `custom_name`.
-         */
-        LinenBatchItemIn: {
-            /** Garment Type Id */
-            garment_type_id?: number | null;
-            /**
-             * Custom Name
-             * @default
-             */
-            custom_name: string;
-            /** Quantity In */
-            quantity_in: number;
-            /** Weight Kg */
-            weight_kg?: number | null;
-        };
-        /** HospitalityCountersOut */
-        HospitalityCountersOut: {
-            /** Batches */
-            batches: number;
-            /** In Plant */
-            in_plant: number;
-            /** Dispatched */
-            dispatched: number;
-            /** Weight Kg */
-            weight_kg: number | null;
-            /** Pieces In */
-            pieces_in: number;
-            /** Pieces Out */
-            pieces_out: number;
-            /** Shortage */
-            shortage: number;
-            /** Shortage Rate */
-            shortage_rate: number | null;
-        };
-        /** BatchNoteItemOut */
-        BatchNoteItemOut: {
-            /** Item Id */
-            item_id: number;
-            /** Name */
-            name: string;
-            /** Quantity In */
-            quantity_in: number;
-            /** Quantity Out */
-            quantity_out: number | null;
-            /** Shortage */
-            shortage: number | null;
-        };
-        /**
-         * BatchNoteOut
-         * @description Acta de devolución que acompaña la carga limpia de vuelta a faena.
-         */
-        BatchNoteOut: {
-            /** Batch Number */
-            batch_number: string;
-            /** Company Name */
-            company_name: string;
-            /** Company Logo Url */
-            company_logo_url: string | null;
-            /** Camp */
-            camp: string;
-            /** Status */
-            status: string;
-            /**
-             * Received At
-             * Format: date-time
-             */
-            received_at: string;
-            /** Promised At */
-            promised_at: string | null;
-            /** Dispatched At */
-            dispatched_at: string | null;
-            /** Weight Kg */
-            weight_kg: number | null;
-            /** Received By Client */
-            received_by_client: string;
-            /** Observations */
-            observations: string;
-            /** Items */
-            items: components["schemas"]["BatchNoteItemOut"][];
-            /** Total In */
-            total_in: number;
-            /** Total Out */
-            total_out: number | null;
-            /** Shortage */
-            shortage: number | null;
-            /** Is Counted */
-            is_counted: boolean;
-        };
-        /** ReturnCountBatchIn */
-        ReturnCountBatchIn: {
-            /** Counts */
-            counts: components["schemas"]["ReturnCountIn"][];
-        };
-        /**
-         * ReturnCountIn
-         * @description Cuántas piezas de una línea volvieron del lavado.
-         */
-        ReturnCountIn: {
-            /** Item Id */
-            item_id: number;
-            /** Quantity Out */
-            quantity_out: number;
-        };
-        /** DispatchIn */
-        DispatchIn: {
-            /**
-             * Received By Client
-             * @default
-             */
-            received_by_client: string;
+            /** Lines */
+            lines: components["schemas"]["LinenLineIn"][];
             /**
              * Note
              * @default
              */
             note: string;
+        };
+        /** LinenLineIn */
+        LinenLineIn: {
+            /** Garment Type Id */
+            garment_type_id: number;
+            /** Quantity */
+            quantity: number;
+        };
+        /**
+         * CountIn
+         * @description Conteo de inventario: carga inicial o reajuste de un lugar.
+         *
+         *     `camp_id` null es la bodega de faena. Los tipos que no vienen en `lines` no
+         *     se tocan: contar solo las sábanas no pone las toallas en cero.
+         */
+        CountIn: {
+            /** Company Id */
+            company_id: number;
+            /** Camp Id */
+            camp_id?: number | null;
+            /** Lines */
+            lines: components["schemas"]["CountLineIn"][];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** CountLineIn */
+        CountLineIn: {
+            /** Garment Type Id */
+            garment_type_id: number;
+            /** Counted */
+            counted: number;
+        };
+        /** FieldMovementBatchOut */
+        FieldMovementBatchOut: {
+            /** Results */
+            results: components["schemas"]["FieldMovementResultOut"][];
+        };
+        /**
+         * FieldMovementResultOut
+         * @description Resultado de un movimiento de la cola del teléfono.
+         *
+         *     `DUPLICADO` no es un error: significa que el servidor ya lo tenía (se
+         *     perdió la respuesta de un envío anterior) y la app debe darlo por enviado.
+         *     `ERROR` es un rechazo de negocio; reintentar no lo va a arreglar.
+         */
+        FieldMovementResultOut: {
+            /**
+             * Client Uuid
+             * Format: uuid
+             */
+            client_uuid: string;
+            /** Status */
+            status: string;
+            /** Movement Id */
+            movement_id?: number | null;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+        };
+        /** FieldMovementBatchIn */
+        FieldMovementBatchIn: {
+            /** Movements */
+            movements: components["schemas"]["FieldMovementIn"][];
+        };
+        /**
+         * FieldMovementIn
+         * @description Reparto o retiro registrado en faena por la app móvil, con o sin señal.
+         */
+        FieldMovementIn: {
+            /**
+             * Client Uuid
+             * Format: uuid
+             */
+            client_uuid: string;
+            /** Kind */
+            kind: string;
+            /** Company Id */
+            company_id: number;
+            /** Camp Id */
+            camp_id: number;
+            /** Lines */
+            lines: components["schemas"]["LinenLineIn"][];
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Accuracy Meters */
+            accuracy_meters: number;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /**
+         * DispatchPrintJobOut
+         * @description Datos de la guía de despacho, sin layout: la terminal arma el ticket.
+         */
+        DispatchPrintJobOut: {
+            /** Number */
+            number: string;
+            /** Company Name */
+            company_name: string;
+            /** Faena */
+            faena: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Registered By Name */
+            registered_by_name: string;
+            /** Note */
+            note: string;
+            /** Total Quantity */
+            total_quantity: number;
+            /** Lines */
+            lines: components["schemas"]["DispatchPrintLineOut"][];
+        };
+        /** DispatchPrintLineOut */
+        DispatchPrintLineOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Quantity */
+            quantity: number;
+        };
+        /** VoidMovementIn */
+        VoidMovementIn: {
+            /** Reason */
+            reason: string;
         };
         /** AgingBucket */
         AgingBucket: {
@@ -3700,6 +3792,7 @@ export interface operations {
         parameters: {
             query?: {
                 is_active?: boolean | null;
+                is_linen?: boolean | null;
                 limit?: number;
                 offset?: number;
             };
@@ -5134,12 +5227,35 @@ export interface operations {
             };
         };
     };
-    hospitality_api_list_batches: {
+    hospitality_api_get_balances: {
         parameters: {
             query?: {
-                status?: string | null;
                 company_id?: number | null;
-                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyBalanceOut"][];
+                };
+            };
+        };
+    };
+    hospitality_api_list_movements: {
+        parameters: {
+            query?: {
+                company_id?: number | null;
+                camp_id?: number | null;
+                kind?: string | null;
+                include_voided?: boolean;
                 date_from?: string | null;
                 date_to?: string | null;
                 limit?: number;
@@ -5157,12 +5273,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedLinenBatchOut"];
+                    "application/json": components["schemas"]["PagedLinenMovementOut"];
                 };
             };
         };
     };
-    hospitality_api_create_batch: {
+    hospitality_api_register_dispatch: {
         parameters: {
             query?: never;
             header?: never;
@@ -5171,7 +5287,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LinenBatchIn"];
+                "application/json": components["schemas"]["DispatchIn"];
             };
         };
         responses: {
@@ -5181,7 +5297,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LinenBatchOut"];
+                    "application/json": components["schemas"]["LinenMovementOut"];
                 };
             };
             /** @description Bad Request */
@@ -5195,91 +5311,26 @@ export interface operations {
             };
         };
     };
-    hospitality_api_get_counters: {
+    hospitality_api_register_count: {
         parameters: {
-            query?: {
-                date_from?: string | null;
-                date_to?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountIn"];
+            };
+        };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HospitalityCountersOut"];
-                };
-            };
-        };
-    };
-    hospitality_api_get_batch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                batch_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LinenBatchOut"];
-                };
-            };
-        };
-    };
-    hospitality_api_get_batch_note: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                batch_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchNoteOut"];
-                };
-            };
-        };
-    };
-    hospitality_api_start_processing: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                batch_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LinenBatchOut"];
+                    "application/json": components["schemas"]["LinenMovementOut"];
                 };
             };
             /** @description Bad Request */
@@ -5293,18 +5344,16 @@ export interface operations {
             };
         };
     };
-    hospitality_api_register_return_count: {
+    hospitality_api_sync_field_movements: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                batch_id: number;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ReturnCountBatchIn"];
+                "application/json": components["schemas"]["FieldMovementBatchIn"];
             };
         };
         responses: {
@@ -5314,7 +5363,51 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LinenBatchOut"];
+                    "application/json": components["schemas"]["FieldMovementBatchOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_get_movement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                movement_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinenMovementOut"];
+                };
+            };
+        };
+    };
+    hospitality_api_get_dispatch_print_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                movement_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchPrintJobOut"];
                 };
             };
             /** @description Bad Request */
@@ -5328,18 +5421,18 @@ export interface operations {
             };
         };
     };
-    hospitality_api_dispatch_batch: {
+    hospitality_api_void_movement: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                batch_id: number;
+                movement_id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DispatchIn"];
+                "application/json": components["schemas"]["VoidMovementIn"];
             };
         };
         responses: {
@@ -5349,7 +5442,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LinenBatchOut"];
+                    "application/json": components["schemas"]["LinenMovementOut"];
                 };
             };
             /** @description Bad Request */

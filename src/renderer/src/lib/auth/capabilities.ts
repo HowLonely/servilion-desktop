@@ -14,9 +14,8 @@ import type { SessionUser } from "@shared/types";
  *   POST /api/orders/{id}/packing/finish     → DIGITADOR_EMPAQUE, SUPERVISOR
  *   POST /api/orders/{id}/dispatch           → DIGITADOR_EMPAQUE, SUPERVISOR
  *   POST /api/orders/{id}/incomplete/resolve → DIGITADOR_EMPAQUE, SUPERVISOR
- *   POST /api/hospitality/                   → DIGITADOR_OT, SUPERVISOR
- *   POST /api/hospitality/{id}/return-count  → DIGITADOR_EMPAQUE, SUPERVISOR
- *   POST /api/hospitality/{id}/dispatch      → SUPERVISOR
+ *   POST /api/hospitality/dispatches         → DIGITADOR_EMPAQUE
+ *   GET  /api/hospitality/balances           → cualquier usuario autenticado
  *
  * El equivalente en el panel web es `components/layout/nav-config.ts`. Son dos
  * repositorios distintos, así que la matriz está duplicada a propósito: si
@@ -29,13 +28,12 @@ export const PACKING_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as con
 // /scan/packing, aunque viven en módulos distintos de esta terminal.
 export const DISPATCH_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
 
-// Hotelería reparte sus tres momentos entre los mismos puestos, y por eso vive
-// en esta terminal y no solo en el panel web: quien recibe la carga sucia es el
-// digitador de OT, quien cuenta la salida es el de empaque, y el despacho —que
-// fija la merma definitiva del lote— queda en el supervisor.
-export const LINEN_RECEIVE_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_OT"] as const;
-export const LINEN_COUNT_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
-export const LINEN_DISPATCH_ROLES = ["ADMIN", "SUPERVISOR"] as const;
+// Hotelería es un stock rotativo: de la planta solo sale el despacho de lencería
+// limpia hacia la faena, y lo hace el mismo puesto que despacha los morrales.
+// El reparto y el retiro ocurren en faena (app móvil) y el conteo de inventario
+// es del administrador en la web. El supervisor entra solo a consultar saldos.
+export const LINEN_DISPATCH_ROLES = ["ADMIN", "DIGITADOR_EMPAQUE"] as const;
+export const LINEN_VIEW_ROLES = ["ADMIN", "SUPERVISOR", "DIGITADOR_EMPAQUE"] as const;
 
 // Consulta de histórico: guías y trabajadores. DIGITADOR_EMPAQUE y PESAJE
 // quedan fuera a propósito — su trabajo empieza y termina en el morral que
@@ -92,12 +90,10 @@ export type Capabilities = {
   canPack: boolean;
   /** Despachar a faena un morral ya cerrado (Completo o Incompleto). */
   canDispatch: boolean;
-  /** Recibir una carga de lencería sucia del campamento. */
-  canReceiveLinen: boolean;
-  /** Contar la salida de la lencería lavada, que es donde aparece la merma. */
-  canCountLinen: boolean;
-  /** Despachar la carga limpia y cerrar el lote. */
+  /** Despachar lencería limpia de la planta a la faena de un cliente de hotelería. */
   canDispatchLinen: boolean;
+  /** Consultar los saldos de lencería por campamento. */
+  canViewLinen: boolean;
   /** Consultar el histórico de guías y trabajadores. */
   canViewHistory: boolean;
   /** Crear, editar y desactivar trabajadores. Sin esto, solo se consulta. */
@@ -112,9 +108,8 @@ export function capabilitiesOf(user: SessionUser | null): Capabilities {
   const canDigitize = (DIGITIZE_ROLES as readonly string[]).includes(role);
   const canPack = (PACKING_ROLES as readonly string[]).includes(role);
   const canDispatch = (DISPATCH_ROLES as readonly string[]).includes(role);
-  const canReceiveLinen = (LINEN_RECEIVE_ROLES as readonly string[]).includes(role);
-  const canCountLinen = (LINEN_COUNT_ROLES as readonly string[]).includes(role);
   const canDispatchLinen = (LINEN_DISPATCH_ROLES as readonly string[]).includes(role);
+  const canViewLinen = (LINEN_VIEW_ROLES as readonly string[]).includes(role);
   const canViewHistory = (HISTORY_ROLES as readonly string[]).includes(role);
   const canManageWorkers = (WORKER_MANAGE_ROLES as readonly string[]).includes(role);
 
@@ -123,9 +118,7 @@ export function capabilitiesOf(user: SessionUser | null): Capabilities {
   if (canDigitize) stations.push("digitize");
   if (canPack) stations.push("packing");
   if (canDispatch) stations.push("dispatch");
-  // Basta con poder hacer uno de los dos momentos del lote: la estación muestra
-  // solo el que corresponde al rol.
-  if (canReceiveLinen || canCountLinen) stations.push("hospitality");
+  if (canViewLinen) stations.push("hospitality");
   if (canViewHistory) stations.push("history");
 
   return {
@@ -133,9 +126,8 @@ export function capabilitiesOf(user: SessionUser | null): Capabilities {
     canDigitize,
     canPack,
     canDispatch,
-    canReceiveLinen,
-    canCountLinen,
     canDispatchLinen,
+    canViewLinen,
     canViewHistory,
     canManageWorkers,
     stations,

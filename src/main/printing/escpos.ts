@@ -10,7 +10,12 @@ import {
 } from "./text";
 import { receiptScanCode } from "./zpl";
 
-import type { PrinterConfig, ReceiptPrintJob, WeighPrintJob } from "../../shared/types";
+import type {
+  LinenDispatchPrintJob,
+  PrinterConfig,
+  ReceiptPrintJob,
+  WeighPrintJob,
+} from "../../shared/types";
 
 /**
  * ESC/POS — *Epson Standard Code for Point Of Sale*.
@@ -261,6 +266,36 @@ export function buildReceiptEscPos(job: ReceiptPrintJob, printer: PrinterConfig)
     ),
     rule(printer),
     `${origin}\n`,
+    feed(2),
+    cut,
+  ].join("");
+}
+
+/** Guía de despacho de lencería. Mismo contenido que en ZPL (ver `buildLinenDispatchZpl`). */
+export function buildLinenDispatchEscPos(job: LinenDispatchPrintJob, printer: PrinterConfig): string {
+  return [
+    init,
+    alignCenter,
+    `${boldOn}GUIA DE DESPACHO - HOTELERIA\n${boldOff}`,
+    `${size(3, 3)}${boldOn}${asciiText(job.number)}\n${boldOff}${normal}`,
+    centered(printer, job.company_name.toUpperCase()),
+    job.faena ? centered(printer, job.faena) : "",
+    alignLeft,
+    rule(printer),
+    row(printer, "Fecha", formatDateTime(job.occurred_at)),
+    row(printer, "Despacha", job.registered_by_name || "-"),
+    rule(printer),
+
+    "LENCERIA LIMPIA DESPACHADA\n",
+    ...job.lines.map((item) =>
+      row(printer, truncate(asciiText(item.name), columns(printer) - 8), `x${item.quantity}`),
+    ),
+    rule(printer),
+    `${size(2, 2)}${boldOn}TOTAL ${job.total_quantity} PIEZAS\n${boldOff}${normal}`,
+    feed(2),
+    "Recibe en faena:\n",
+    feed(2),
+    `${"_".repeat(Math.min(32, columns(printer)))}\n`,
     feed(2),
     cut,
   ].join("");

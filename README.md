@@ -14,7 +14,7 @@ La cuarta va aparte porque es **otro servicio**, no otra pantalla del mismo:
 
 | Estación | Qué hace |
 |---|---|
-| **Lencería de hotelería** | Recibir la carga a granel del campamento y contar su salida para medir la merma |
+| **Lencería de hotelería** | Despachar lencería limpia a la faena del cliente (con guía impresa) y consultar el saldo de cada campamento |
 
 Y la quinta no es un puesto físico —nadie hace turno ahí—, pero resuelve la misma necesidad que las otras: no tener que abrir el panel web para una duda que aparece a mitad de un turno.
 
@@ -77,15 +77,15 @@ Se deriva del rol del usuario, respetando **lo que el backend exige de verdad** 
 
 | Rol | Pesaje | Digitalizar | Empaque | Hotelería | Histórico | Al abrir la app |
 |---|:---:|:---:|:---:|:---:|:---:|---|
-| ADMIN | ✅ | ✅ | ✅ | ✅ | ✅ + edita | Menú de selección |
-| SUPERVISOR | ✅ | ✅ | ✅ | ✅ | ✅ consulta | Menú de selección |
+| ADMIN | ✅ | ✅ | ✅ | ✅ despachar | ✅ + edita | Menú de selección |
+| SUPERVISOR | ✅ | ✅ | ✅ | ✅ saldos | ✅ consulta | Menú de selección |
 | PESAJE | ✅ | ❌ | ❌ | ❌ | ❌ | Entra directo a Pesaje |
-| DIGITADOR_OT | ❌ | ✅ | ❌ | ✅ recibir | ✅ consulta | Menú de selección |
-| DIGITADOR_EMPAQUE | ❌ | ❌ | ✅ | ✅ contar | ❌ | Menú de selección |
+| DIGITADOR_OT | ❌ | ✅ | ❌ | ❌ | ✅ consulta | Menú de selección |
+| DIGITADOR_EMPAQUE | ❌ | ❌ | ✅ | ✅ despachar | ❌ | Menú de selección |
 
-Hotelería reparte sus momentos entre los mismos puestos que el morral —recibir la carga es del digitador de OT, contar la salida es del de empaque, y el despacho del lote queda en el supervisor porque fija la merma definitiva—, así que la estación aparece para los dos y cada uno ve solo su mitad.
+Hotelería es un stock rotativo de lencería del cliente. De ese circuito, en la planta solo ocurre el **despacho** de lo limpio hacia la faena, y lo hace el mismo puesto que despacha los morrales. El reparto a cada campamento y el retiro del sucio los registra el supervisor en faena con la app móvil, y el conteo de inventario es del administrador en el panel web. El supervisor ve la estación solo para consultar saldos.
 
-Con una sola estación disponible se entra directo; con varias aparece el menú, elegible con las teclas numéricas o tocando la tarjeta. Desde que existe hotelería el único que entra directo es `PESAJE`: los digitadores tienen además su mitad del lote, y en una planta que no lava lencería ese menú de dos tarjetas es el precio de no esconderles la estación.
+Con una sola estación disponible se entra directo; con varias aparece el menú, elegible con las teclas numéricas o tocando la tarjeta.
 
 El histórico es de consulta para todos salvo ADMIN, que además crea, edita y desactiva trabajadores: el catálogo es lo único que separa a ADMIN de SUPERVISOR en todo el sistema (`USUARIOS.md` §2), y el backend lo exige igual —`POST/PUT/DELETE /api/workers/` van con `@require_admin()`—, así que ocultar los botones no es la defensa, solo evita ofrecer un 403.
 
@@ -139,7 +139,7 @@ Esas etiquetas por tipo **esta terminal no las imprime**: se sacan del panel web
 
 ### Corregir un pesaje
 
-Desde **Pesajes del turno** se puede reimprimir el juego de etiquetas, o anular el pesaje **mientras nadie lo haya digitalizado**. Anular no borra: el morral se pesó de verdad y sus adhesivos pueden andar pegados a la ropa. Una vez digitalizado, el peso y las prendas se corrigen desde la guía, no desde la báscula.
+Desde **Pesajes anteriores** se puede reimprimir el juego de etiquetas, o anular el pesaje **mientras nadie lo haya digitalizado**. Anular no borra: el morral se pesó de verdad y sus adhesivos pueden andar pegados a la ropa. Una vez digitalizado, el peso y las prendas se corrigen desde la guía, no desde la báscula.
 
 Si al contar las prendas el digitador no coincide con la báscula, **manda el digitador**: la guía queda con el conteo real, el pesaje conserva el suyo y la diferencia queda visible en pantalla.
 
@@ -158,9 +158,9 @@ Cada estación configura **hasta dos impresoras**, porque los dos impresos no pi
 | Slot | Para qué | Máquina típica |
 |---|---|---|
 | **Etiquetera** | Adhesivos lavables por prenda y ticket maestro del pesaje | Etiquetera de rollo troquelado |
-| **Impresora de boleta** *(opcional)* | La boleta del morral limpio | Impresora de boleta de 58/80 mm |
+| **Impresora de boleta** *(opcional)* | La boleta del morral limpio y la guía de despacho de lencería | Impresora de boleta de 58/80 mm |
 
-Si la segunda queda sin configurar, la boleta sale por la etiquetera. Un adhesivo lavable, en cambio, **solo** puede salir de una etiquetera: se pega a la prenda y viaja al lavado.
+Si la segunda queda sin configurar, la boleta y la guía de despacho salen por la etiquetera. Un adhesivo lavable, en cambio, **solo** puede salir de una etiquetera: se pega a la prenda y viaja al lavado.
 
 | Ajuste | Para qué |
 |---|---|
@@ -263,6 +263,6 @@ La estación de **pesaje no tiene equivalente en el panel web**: nació aquí, p
 1. **Al guardar una OT**, la web navega al detalle de la orden. Aquí aparece una confirmación grande con el ref del morral y **Enter encadena la siguiente OT** — quien digita cien seguidas no debería tocar el mouse.
 2. **"Ver OT completa"**, que en la web navega al panel, abre un detalle de **solo lectura** dentro de la app.
 3. **La boleta** la imprime esta terminal por la etiquetera; la web la muestra como hoja para imprimir por navegador.
-4. **Hotelería** llega recortada a lo que se hace de pie en la planta: recibir la carga y contar la salida. El listado histórico, la merma acumulada y el acta de devolución (`/hospitality/{id}/note`) siguen siendo del panel web, que es donde se consultan sentado.
+4. **Hotelería** llega recortada a lo que se hace de pie en la planta: despachar a faena con su guía y mirar los saldos. El historial de movimientos, el conteo de inventario y las anulaciones siguen siendo del panel web, que es donde se hacen sentado.
 
 Si cambias una de esas pantallas en el panel web, revisa si el cambio aplica también aquí.

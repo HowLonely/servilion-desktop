@@ -159,6 +159,23 @@ export type ReceiptPrintJob = {
   items: { name: string; quantity: number }[];
 };
 
+/**
+ * La guía de despacho de lencería: espejo de `DispatchPrintJobOut` del backend.
+ *
+ * Acompaña la carga limpia que sale de la planta hacia la faena del cliente.
+ * Sale por la impresora de documentos, igual que la boleta del morral.
+ */
+export type LinenDispatchPrintJob = {
+  number: string;
+  company_name: string;
+  faena: string;
+  occurred_at: string;
+  registered_by_name: string;
+  note: string;
+  total_quantity: number;
+  lines: { code: string; name: string; quantity: number }[];
+};
+
 export type PrintResult = { ok: true } | { ok: false; detail: string };
 
 /** Espejo de `UserOut` del backend (authentication/schemas.py). */
