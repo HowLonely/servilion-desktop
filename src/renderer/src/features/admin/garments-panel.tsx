@@ -119,7 +119,7 @@ function GarmentDialog({ garment, onClose }: { garment: GarmentTypeOut | null; o
       </FieldRow>
       <CheckField
         label="Se usa en hotelería"
-        hint="Aparece en el despacho de lencería y en los saldos por campamento."
+        hint="Aparece en el despacho de hotelería y en los saldos por campamento."
         checked={isLinen}
         onChange={setIsLinen}
       />

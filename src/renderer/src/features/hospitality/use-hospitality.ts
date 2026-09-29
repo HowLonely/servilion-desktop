@@ -19,10 +19,10 @@ export const hospitalityKeys = {
 export const RECENT_DISPATCHES = 8;
 
 /**
- * Saldo de lencería de todos los clientes de hotelería.
+ * Saldo de hotelería de todos los clientes de hotelería.
  *
  * Una sola respuesta alcanza para todo en esta terminal: la lista de clientes a
- * los que se despacha, los tipos de lencería de cada uno y los saldos.
+ * los que se despacha, los tipos de hotelería de cada uno y los saldos.
  */
 export function useBalances() {
   return useQuery({

@@ -227,7 +227,7 @@ export function buildReceiptEpl(job: ReceiptPrintJob, printer: PrinterConfig): s
   ].join("\n");
 }
 
-/** Guía de despacho de lencería. Mismo layout que en ZPL (ver `buildLinenDispatchZpl`). */
+/** Guía de despacho de hotelería. Mismo layout que en ZPL (ver `buildLinenDispatchZpl`). */
 export function buildLinenDispatchEpl(job: LinenDispatchPrintJob, printer: PrinterConfig): string {
   const { dpi } = printer;
   const margin = dots(3, dpi);
@@ -249,7 +249,7 @@ export function buildLinenDispatchEpl(job: LinenDispatchPrintJob, printer: Print
       dots(2.6, dpi),
       `${formatDateTime(job.occurred_at)}${SEPARATOR}${truncate(asciiText(job.registered_by_name), 24)}`,
     ),
-    text(margin, at(30.5), dots(2.6, dpi), "LENCERIA LIMPIA DESPACHADA"),
+    text(margin, at(30.5), dots(2.6, dpi), "HOTELERIA LIMPIA DESPACHADA"),
     ...job.lines.map((item, index) =>
       text(
         margin,

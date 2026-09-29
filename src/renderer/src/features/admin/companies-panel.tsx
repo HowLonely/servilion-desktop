@@ -36,7 +36,7 @@ const ROLE_OPTIONS = [
 ];
 const SERVICE_OPTIONS = [
   { value: "PERSONAL", label: "Ropa de trabajador" },
-  { value: "HOTELERIA", label: "Lencería de hotelería" },
+  { value: "HOTELERIA", label: "Hotelería" },
 ];
 const FLOW_OPTIONS = [
   { value: "FLUJO_1", label: "Flujo 1 · entrega en habitación" },
@@ -53,7 +53,7 @@ const NEW_CLIENT = "__nuevo__";
  * Empresas: de quién es la ropa. Siempre cuelgan de un cliente; si no se elige
  * uno, se crea un cliente con el mismo nombre (el caso "cliente = empresa").
  * El tipo de servicio decide si la empresa opera con guías (ropa de
- * trabajador) o con despachos de lencería (hotelería).
+ * trabajador) o con despachos de hotelería (hotelería).
  */
 export function CompaniesPanel() {
   const [search, setSearch] = useState("");
@@ -220,7 +220,7 @@ function CompanyDialog({ company, onClose }: { company: CompanyOut | null; onClo
           value={form.service_type}
           onChange={(v) => set("service_type", v)}
           options={SERVICE_OPTIONS}
-          hint="Hotelería aparece en el despacho de lencería."
+          hint="Hotelería aparece en el despacho de hotelería."
         />
         <SelectField
           label="Entrega"

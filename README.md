@@ -14,7 +14,7 @@ La cuarta va aparte porque es **otro servicio**, no otra pantalla del mismo:
 
 | Estación | Qué hace |
 |---|---|
-| **Lencería de hotelería** | Despachar lencería limpia a la faena del cliente (con guía impresa) y consultar el saldo de cada campamento |
+| **Hotelería** | Despachar hotelería limpia a la faena del cliente (con guía impresa) y consultar el saldo de cada campamento |
 
 Y la quinta no es un puesto físico —nadie hace turno ahí—, pero resuelve la misma necesidad que las otras: no tener que abrir el panel web para una duda que aparece a mitad de un turno.
 
@@ -81,7 +81,7 @@ Los roles ya no son fijos: cada rol es una lista de **permisos** que se edita en
 | `orders.digitize` | Digitalizar OT |
 | `orders.pack` | Empaque y revisión |
 | `orders.dispatch` | Despacho |
-| `hospitality.dispatch` / `hospitality.view` | Lencería de hotelería (despachar / solo saldos) |
+| `hospitality.dispatch` / `hospitality.view` | Hotelería (despachar / solo saldos) |
 | `history.view` | Consultar histórico |
 | `users.manage`, `catalog.manage`, `workers.manage`, `sync.manage` | Configuración (usuarios y roles, catálogo, trabajadores, sincronización) |
 
@@ -96,7 +96,7 @@ Ocultar un botón no es la defensa: el backend exige el mismo permiso en cada en
 | DIGITADOR_OT | ❌ | ✅ | ❌ | ❌ | ✅ consulta | Menú de selección |
 | DIGITADOR_EMPAQUE | ❌ | ❌ | ✅ | ✅ despachar | ❌ | Menú de selección |
 
-Hotelería es un stock rotativo de lencería del cliente. De ese circuito, en la planta solo ocurre el **despacho** de lo limpio hacia la faena, y lo hace el mismo puesto que despacha los morrales. El reparto a cada campamento y el retiro del sucio los registra el supervisor en faena con la app móvil, y el conteo de inventario es del administrador en el panel web. El supervisor ve la estación solo para consultar saldos.
+Hotelería es un stock rotativo de hotelería del cliente. De ese circuito, en la planta solo ocurre el **despacho** de lo limpio hacia la faena, y lo hace el mismo puesto que despacha los morrales. El reparto a cada campamento y el retiro del sucio los registra el supervisor en faena con la app móvil, y el conteo de inventario es del administrador en el panel web. El supervisor ve la estación solo para consultar saldos.
 
 Con una sola estación disponible se entra directo; con varias aparece el menú, elegible con las teclas numéricas o tocando la tarjeta.
 
@@ -171,7 +171,7 @@ Cada estación configura **hasta dos impresoras**, porque los dos impresos no pi
 | Slot | Para qué | Máquina típica |
 |---|---|---|
 | **Etiquetera** | Adhesivos lavables por prenda y ticket maestro del pesaje | Etiquetera de rollo troquelado |
-| **Impresora de boleta** *(opcional)* | La boleta del morral limpio y la guía de despacho de lencería | Impresora de boleta de 58/80 mm |
+| **Impresora de boleta** *(opcional)* | La boleta del morral limpio y la guía de despacho de hotelería | Impresora de boleta de 58/80 mm |
 
 Si la segunda queda sin configurar, la boleta y la guía de despacho salen por la etiquetera. Un adhesivo lavable, en cambio, **solo** puede salir de una etiquetera: se pega a la prenda y viaja al lavado.
 

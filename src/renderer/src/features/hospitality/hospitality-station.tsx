@@ -11,9 +11,9 @@ import type { ServerStatus } from "@shared/types";
 type View = "dispatch" | "balances";
 
 /**
- * Estación de lencería de hotelería.
+ * Estación de hotelería.
  *
- * Es el otro servicio de la planta y no otra pantalla del mismo: la lencería
+ * Es el otro servicio de la planta y no otra pantalla del mismo: la hotelería
  * es un stock del cliente que rota entre la planta y sus campamentos, sin
  * trabajador, sin habitación y sin entrega individual.
  *
@@ -41,8 +41,8 @@ export function HospitalityStation({
 
   return (
     <StationShell
-      title="Lencería de hotelería"
-      description="Despacho de lencería limpia a faena y saldo de cada campamento."
+      title="Hotelería"
+      description="Despacho de hotelería limpia a faena y saldo de cada campamento."
       stationName={stationName}
       serverStatus={serverStatus}
       onBack={onBack}

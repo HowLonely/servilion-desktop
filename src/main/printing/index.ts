@@ -36,7 +36,7 @@ export function buildReceiptPayload(job: ReceiptPrintJob, printer: PrinterConfig
   return builders[printer.language](job, printer);
 }
 
-/** La guía de despacho de lencería, en el lenguaje que hable la impresora. */
+/** La guía de despacho de hotelería, en el lenguaje que hable la impresora. */
 export function buildLinenDispatchPayload(job: LinenDispatchPrintJob, printer: PrinterConfig): string {
   const builders: Record<PrinterLanguage, (j: LinenDispatchPrintJob, p: PrinterConfig) => string> = {
     zpl: buildLinenDispatchZpl,

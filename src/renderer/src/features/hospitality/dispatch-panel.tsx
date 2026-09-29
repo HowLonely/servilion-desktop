@@ -22,7 +22,7 @@ import type { components } from "@/lib/api/schema";
 type LinenMovementOut = components["schemas"]["LinenMovementOut"];
 
 /**
- * Despacho de lencería limpia desde la planta hacia la faena del cliente.
+ * Despacho de hotelería limpia desde la planta hacia la faena del cliente.
  *
  * Es lo único de hotelería que ocurre en la planta: el reparto a cada
  * campamento y el retiro del sucio los registra el supervisor en faena con la
@@ -34,7 +34,7 @@ export function DispatchPanel() {
   const printDispatch = usePrintLinenDispatch();
 
   const [companyId, setCompanyId] = useState<number | null>(null);
-  // Lo tecleado por tipo de lencería. Vacío o cero = ese tipo no va.
+  // Lo tecleado por tipo de hotelería. Vacío o cero = ese tipo no va.
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [note, setNote] = useState("");
   const [created, setCreated] = useState<LinenMovementOut | null>(null);
@@ -140,12 +140,12 @@ export function DispatchPanel() {
       {company && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold tracking-tight">
-            {companies.length > 1 ? "2 · " : ""}Lencería limpia que sale a {company.faena_name || company.company_name}
+            {companies.length > 1 ? "2 · " : ""}Hotelería limpia que sale a {company.faena_name || company.company_name}
           </h2>
 
           {company.linen_types.length === 0 ? (
             <Card className="p-5 text-base text-muted-foreground">
-              No hay tipos de lencería. En el panel web, marca en Prendas los que se usan en
+              No hay tipos de hotelería. En el panel web, marca en Prendas los que se usan en
               hotelería.
             </Card>
           ) : (
@@ -273,7 +273,7 @@ function DispatchConfirmation({
       </span>
       <div>
         <p className="text-base text-muted-foreground">
-          Lencería despachada a {movement.company_name}
+          Hotelería despachada a {movement.company_name}
         </p>
         <p className="mt-1 font-mono text-5xl font-semibold tracking-tight">{movement.number}</p>
       </div>

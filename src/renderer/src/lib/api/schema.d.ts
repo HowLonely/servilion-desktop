@@ -1125,7 +1125,7 @@ export interface paths {
         };
         /**
          * Get Balances
-         * @description Dónde está la lencería de cada cliente: Servilion, bodega de faena y campamentos.
+         * @description Dónde está la hotelería de cada cliente: Servilion, bodega de faena y campamentos.
          *
          *     Sin `company_id` trae todos los clientes de hotelería: es lo que baja la app
          *     móvil para ver el saldo del campamento sin señal.
@@ -1167,7 +1167,7 @@ export interface paths {
         put?: never;
         /**
          * Register Dispatch
-         * @description Despacho de lencería limpia desde la planta a la faena del cliente.
+         * @description Despacho de hotelería limpia desde la planta a la faena del cliente.
          */
         post: operations["hospitality_api_register_dispatch"];
         delete?: never;
@@ -3258,7 +3258,7 @@ export interface components {
         };
         /**
          * DispatchIn
-         * @description Despacho de lencería limpia desde la planta a la faena del cliente.
+         * @description Despacho de hotelería limpia desde la planta a la faena del cliente.
          */
         DispatchIn: {
             /** Company Id */

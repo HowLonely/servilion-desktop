@@ -31,7 +31,7 @@ function printer(language: PrinterLanguage): PrinterConfig {
   };
 }
 
-describe("guía de despacho de lencería", () => {
+describe("guía de despacho de hotelería", () => {
   it.each(["zpl", "epl", "escpos"] as const)("lleva número, detalle y total en %s", (language) => {
     const payload = buildLinenDispatchPayload(job, printer(language));
 
@@ -43,7 +43,7 @@ describe("guía de despacho de lencería", () => {
     expect(payload).toMatch(/TOALLA|Toalla/);
   });
 
-  it("alarga la etiqueta ZPL con cada tipo de lencería", () => {
+  it("alarga la etiqueta ZPL con cada tipo de hotelería", () => {
     const heightOf = (lines: LinenDispatchPrintJob["lines"]): number =>
       Number(/\^LL(\d+)/.exec(buildLinenDispatchPayload({ ...job, lines }, printer("zpl")))?.[1]);
 

@@ -34,8 +34,8 @@ const STATION_CARDS: Record<
     icon: Truck,
   },
   hospitality: {
-    title: "Lencería de hotelería",
-    description: "Despachar lencería limpia a faena y ver el saldo de cada campamento.",
+    title: "Hotelería",
+    description: "Despachar hotelería limpia a faena y ver el saldo de cada campamento.",
     icon: BedDouble,
   },
   history: {

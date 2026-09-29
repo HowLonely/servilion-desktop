@@ -11,7 +11,7 @@ import type { components } from "@/lib/api/schema";
 type CompanyBalanceOut = components["schemas"]["CompanyBalanceOut"];
 
 /**
- * Saldo de lencería por campamento, solo de consulta.
+ * Saldo de hotelería por campamento, solo de consulta.
  *
  * Corregir un saldo es un conteo de inventario y lo hace el administrador en el
  * panel web; aquí se mira para saber qué tiene cada campamento antes de armar

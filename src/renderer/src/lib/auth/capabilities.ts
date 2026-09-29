@@ -34,7 +34,7 @@ export const PERM = {
  * despacharlo.
  *
  * `hospitality` va aparte porque es OTRO servicio, no otra pantalla del mismo:
- * lo que entra es lencería a granel del campamento —sin trabajador, sin
+ * lo que entra es hotelería a granel del campamento —sin trabajador, sin
  * habitación y sin entrega individual—.
  *
  * `admin` (Configuración) no es un puesto de planta: es donde se administran
@@ -55,7 +55,7 @@ export const STATION_LABELS: Record<Station, string> = {
   digitize: "Digitalizar OT",
   packing: "Empaque y revisión",
   dispatch: "Despacho",
-  hospitality: "Lencería de hotelería",
+  hospitality: "Hotelería",
   history: "Consultar histórico",
   admin: "Configuración",
 };
@@ -66,9 +66,9 @@ export type Capabilities = {
   canPack: boolean;
   /** Despachar a faena un morral ya cerrado (Completo o Incompleto). */
   canDispatch: boolean;
-  /** Despachar lencería limpia de la planta a la faena de un cliente de hotelería. */
+  /** Despachar hotelería limpia de la planta a la faena de un cliente de hotelería. */
   canDispatchLinen: boolean;
-  /** Consultar los saldos de lencería por campamento. */
+  /** Consultar los saldos de hotelería por campamento. */
   canViewLinen: boolean;
   /** Consultar el histórico de guías y trabajadores. */
   canViewHistory: boolean;

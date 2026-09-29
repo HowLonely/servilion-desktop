@@ -96,7 +96,7 @@ export async function printReceipt(job: ReceiptPrintJob): Promise<PrintResult> {
 }
 
 /**
- * Imprime la guía de despacho de lencería de hotelería.
+ * Imprime la guía de despacho de hotelería.
  *
  * Sale por la impresora de documentos, como la boleta. Mismo criterio de
  * errores: el despacho ya quedó registrado y la guía se reimprime.

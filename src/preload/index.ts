@@ -64,7 +64,7 @@ const servilion = {
     /** Imprime (o reimprime) la boleta que acompaña el morral limpio. */
     receipt: (job: ReceiptPrintJob): Promise<PrintResult> =>
       ipcRenderer.invoke("printer:receipt", job),
-    /** Imprime (o reimprime) la guía de despacho de lencería de hotelería. */
+    /** Imprime (o reimprime) la guía de despacho de hotelería. */
     linenDispatch: (job: LinenDispatchPrintJob): Promise<PrintResult> =>
       ipcRenderer.invoke("printer:linenDispatch", job),
   },

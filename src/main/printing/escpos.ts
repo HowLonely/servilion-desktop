@@ -271,7 +271,7 @@ export function buildReceiptEscPos(job: ReceiptPrintJob, printer: PrinterConfig)
   ].join("");
 }
 
-/** Guía de despacho de lencería. Mismo contenido que en ZPL (ver `buildLinenDispatchZpl`). */
+/** Guía de despacho de hotelería. Mismo contenido que en ZPL (ver `buildLinenDispatchZpl`). */
 export function buildLinenDispatchEscPos(job: LinenDispatchPrintJob, printer: PrinterConfig): string {
   return [
     init,
@@ -286,7 +286,7 @@ export function buildLinenDispatchEscPos(job: LinenDispatchPrintJob, printer: Pr
     row(printer, "Despacha", job.registered_by_name || "-"),
     rule(printer),
 
-    "LENCERIA LIMPIA DESPACHADA\n",
+    "HOTELERIA LIMPIA DESPACHADA\n",
     ...job.lines.map((item) =>
       row(printer, truncate(asciiText(item.name), columns(printer) - 8), `x${item.quantity}`),
     ),

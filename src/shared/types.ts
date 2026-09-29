@@ -175,7 +175,7 @@ export type ReceiptPrintJob = {
 };
 
 /**
- * La guía de despacho de lencería: espejo de `DispatchPrintJobOut` del backend.
+ * La guía de despacho de hotelería: espejo de `DispatchPrintJobOut` del backend.
  *
  * Acompaña la carga limpia que sale de la planta hacia la faena del cliente.
  * Sale por la impresora de documentos, igual que la boleta del morral.
